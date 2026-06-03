@@ -3,17 +3,17 @@ import { Chat, Transaction, MiniApp } from './types';
 export const initialChats: Chat[] = [
   {
     id: "amina-k",
-    name: "Amina K.",
+    name: "Best Friends",
     avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAI2Qnz4SzZIkW7JXSeMlEaEK-ifFHZoHOTJm42H4BQ5RdrNXE2sZdDoRYG6ptV3lUXZLX8uUlD8p2595wt5wtyq7RgcsmMErtzPifjsf8XVKcsFAgEYHGrQDybp4LkKIU512EWR5t42NAXhf2Y-AuEPryVQq0npA7T4qKuUE8G3mQkGy8v4T5fypWbwC-lpdxVuOhdhXeK4AU4rshhb_E6B0FZPX3SF82U81wbAfRgfyjjP2ft2WVY0_bceE8eCw57SRouAO3C_QU",
     isOnline: true,
-    unreadCount: 1,
-    lastMessageText: "Can we discuss funding milestones?",
-    lastMessageTime: "10:48 AM",
+    unreadCount: 0,
+    lastMessageText: "See you at 6pm! 👋",
+    lastMessageTime: "11:30 AM",
     messages: [
       {
         id: "m1",
         sender: "other",
-        senderName: "Amina K.",
+        senderName: "Best Friends",
         originalText: "Sannu, ya kake? Ina fatan kana cikin koshin lafiya.",
         text: "Hello, how are you? I hope you are in good health.",
         language: "Hausa",
@@ -23,18 +23,41 @@ export const initialChats: Chat[] = [
         id: "m2",
         sender: "me",
         senderName: "Godfrey",
-        text: "I'm doing great, Amina! Just finished the prototype for the Lagos Tech Hub project. I'll send over the details shortly.",
+        text: "I'm doing great, guys! See you later.",
         timestamp: "10:45 AM"
       },
       {
         id: "m3",
         sender: "other",
-        senderName: "Amina K.",
-        text: "Smart Audio Note",
-        timestamp: "10:48 AM",
-        isVoiceNote: true,
-        voiceDuration: "0:14",
-        voiceTranscript: "...excellent work on the Lagos Hub. Can we discuss the funding milestones for the next phase?"
+        senderName: "Best Friends",
+        text: "See you at 6pm! 👋",
+        timestamp: "11:30 AM"
+      }
+    ]
+  },
+  {
+    id: "work-group",
+    name: "Work Group",
+    isGroup: true,
+    avatar: "groups",
+    isOnline: true,
+    unreadCount: 0,
+    lastMessageText: "Project update has been uploaded.",
+    lastMessageTime: "10:20 AM",
+    messages: [
+      {
+        id: "w1",
+        sender: "other",
+        senderName: "Abidemi Folake",
+        text: "Are the branding slides ready for the investor pitch?",
+        timestamp: "9:15 AM"
+      },
+      {
+        id: "w2",
+        sender: "me",
+        senderName: "Godfrey",
+        text: "Project update has been uploaded.",
+        timestamp: "10:20 AM"
       }
     ]
   },
@@ -55,50 +78,11 @@ export const initialChats: Chat[] = [
         timestamp: "Wednesday"
       },
       {
-        id: "mom2",
-        sender: "me",
-        senderName: "Godfrey",
-        text: "I just landed, Mom! Heading to the hub now.",
-        timestamp: "Wednesday"
-      },
-      {
         id: "mom3",
         sender: "other",
         senderName: "Mom",
         text: "Please call me when you are free.",
         timestamp: "Yesterday"
-      }
-    ]
-  },
-  {
-    id: "work-group",
-    name: "Work Group",
-    isGroup: true,
-    avatar: "groups",
-    unreadCount: 2,
-    lastMessageText: "Project update has been uploaded.",
-    lastMessageTime: "10:20 AM",
-    messages: [
-      {
-        id: "w1",
-        sender: "other",
-        senderName: "Abidemi Folake",
-        text: "Are the branding slides ready for the investor pitch?",
-        timestamp: "9:15 AM"
-      },
-      {
-        id: "w2",
-        sender: "me",
-        senderName: "Godfrey",
-        text: "Yes, I combined the light-mode and dark-mode mockups of AfriChat.",
-        timestamp: "9:45 AM"
-      },
-      {
-        id: "w3",
-        sender: "other",
-        senderName: "Chidi Okafor",
-        text: "Excellent. Project update has been uploaded.",
-        timestamp: "10:20 AM"
       }
     ]
   },
