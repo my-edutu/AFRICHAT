@@ -1,22 +1,23 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI as GenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 
-// Lazy initialization of GoogleGenAI
-let ai: GoogleGenAI | null = null;
-function getGeminiClient() {
-  if (!ai && process.env.GEMINI_API_KEY) {
-    ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
+// Lazy initialization of the AI client
+let ai: GenAI | null = null;
+function getAiClient() {
+  const apiKey = process.env.AI_API_KEY;
+  if (!ai && apiKey) {
+    ai = new GenAI({
+      apiKey,
       httpOptions: {
         headers: {
-          'User-Agent': 'aistudio-build',
+          'User-Agent': 'africhat-build',
         }
       }
     });
@@ -35,7 +36,7 @@ async function startServer() {
       return res.status(400).json({ error: "Text is required" });
     }
 
-    const client = getGeminiClient();
+    const client = getAiClient();
     if (!client) {
       const translations: Record<string, string> = {
         "Sannu, ya kake? Ina fatan kana cikin koshin lafiya.": "Hello, how are you? I hope you are in good health.",
@@ -56,19 +57,19 @@ async function startServer() {
       const result = response.text?.trim() || text;
       res.json({ translatedText: result });
     } catch (err: any) {
-      console.error("Gemini translate error:", err);
+      console.error("AI translate error:", err);
       res.json({ translatedText: `[Translation Fallback] ${text}`, error: err.message });
     }
   });
 
-  // 2. API: Dynamic Mini-App specifications builder using Gemini
+  // 2. API: Dynamic Mini-App specifications builder
   app.post("/api/generate-miniapp", async (req, res) => {
     const { prompt } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    const client = getGeminiClient();
+    const client = getAiClient();
     if (!client) {
       const fallbackApps: Record<string, any> = {
         "ride": {
@@ -170,7 +171,7 @@ async function startServer() {
       const spec = JSON.parse(response.text?.trim() || "{}");
       res.json({ appSpec: spec });
     } catch (err: any) {
-      console.error("Gemini mini-app generation error:", err);
+      console.error("AI mini-app generation error:", err);
       res.status(500).json({ error: "Failed to generate mini-app structure", message: err.message });
     }
   });
@@ -182,13 +183,13 @@ async function startServer() {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    const client = getGeminiClient();
+    const client = getAiClient();
     if (!client) {
       let mockResponse = `I am AfriAI, your super app assistant. That sounds marvelous! Let me help you out. `;
       if (message.toLowerCase().includes("business") || message.toLowerCase().includes("clothing")) {
         mockResponse += `**AfriAI Business Setup Plan for your store:**\n1. **Storefront**: We have initialized AfriMarket Store "African Elegance".\n2. **Logistics**: Integrated with Abuja Delivery Mini-App.\n3. **Payments**: AfriPay NFC and QR scanner linked with 0% gateway commission.\n4. **Broadcasting**: Created promo channel 'Afrigram > Elegance'. Let's launch!`;
       } else {
-        mockResponse += `To fully activate AfriAI smart features, please double check you have added your valid GEMINI_API_KEY in the AI Studio Secrets panel. Let's make digital life in Africa simpler together!`;
+        mockResponse += `To fully activate AfriAI smart features, please double check that your AI_API_KEY is configured. Let's make digital life in Africa simpler together!`;
       }
       return res.json({ response: mockResponse });
     }
@@ -213,8 +214,8 @@ async function startServer() {
       });
       res.json({ response: response.text });
     } catch (err: any) {
-      console.error("Gemini assistant error:", err);
-      res.json({ response: `AfriAI assistant is currently offline. Please configure your GEMINI_API_KEY. Reason: ${err.message}` });
+      console.error("AI assistant error:", err);
+      res.json({ response: `AfriAI assistant is currently offline. Please configure your AI_API_KEY. Reason: ${err.message}` });
     }
   });
 
@@ -225,7 +226,7 @@ async function startServer() {
       return res.json({ summary: "No chat messages to summarize yet." });
     }
 
-    const client = getGeminiClient();
+    const client = getAiClient();
     if (!client) {
       return res.json({ summary: "Amina K. requested info on Lagos Tech Hub funding milestones. You agreed to send over the project details shortly. High-priority follow-up scheduled for 6:00 PM." });
     }

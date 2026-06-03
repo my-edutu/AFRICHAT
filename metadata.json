@@ -2,5 +2,5 @@
   "name": "AfriChat",
   "description": "Africa's Super App for Communication, Payments & Digital Life, combining messaging, payments, commerce, services, and AI assistants.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

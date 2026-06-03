@@ -119,7 +119,7 @@ export default function MiniAppWizardModal({
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col ${theme === 'dark' ? 'bg-[#0E1B14] text-white' : 'bg-[#F8F9FA] text-neutral-900'} overflow-hidden`}>
+    <div className="fixed inset-0 z-50 flex flex-col bg-background text-on-surface overflow-hidden">
       {/* Top Banner */}
       <header className="bg-[#006A42] text-white py-4 px-6 flex justify-between items-center z-10 shadow-md">
         <div className="flex items-center gap-3">

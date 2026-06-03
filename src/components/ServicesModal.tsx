@@ -83,7 +83,7 @@ export default function ServicesModal({
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col ${theme === 'dark' ? 'bg-[#0E1B14] text-white' : 'bg-[#F8F9FA] text-neutral-900'} overflow-hidden`}>
+    <div className="fixed inset-0 z-50 flex flex-col bg-background text-on-surface overflow-hidden">
       {/* Header */}
       <header className="bg-[#006A42] text-white py-4 px-6 flex justify-between items-center z-10 shadow-md">
         <div className="flex items-center gap-3">
@@ -120,7 +120,7 @@ export default function ServicesModal({
 
           {/* Glowing pinpoint */}
           <div className="absolute top-12 left-1/3 w-4 h-4 bg-red-500 rounded-full animate-ping"></div>
-          <div className="absolute top-12 left-1/3 w-2.5 h-2.5 bg-red-650 rounded-full border-2 border-white shadow"></div>
+          <div className="absolute top-12 left-1/3 w-2.5 h-2.5 bg-[#E53935] rounded-full border-2 border-white shadow"></div>
 
           {/* Cars floating on map */}
           <span className="absolute top-8 right-1/4 text-2xl animate-pulse">🚗</span>

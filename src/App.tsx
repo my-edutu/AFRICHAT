@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import LaunchFlow from "./components/LaunchFlow";
 import { 
   initialChats, 
   initialTransactions, 
@@ -13,14 +14,24 @@ import MiniAppWizardModal from "./components/MiniAppWizardModal";
 import ServicesModal from "./components/ServicesModal";
 import LearnModal from "./components/LearnModal";
 
+const THEME_STORAGE_KEY = "africhat-theme";
+
+function getInitialTheme(): 'light' | 'dark' {
+  if (typeof window === "undefined") return "light";
+  const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (stored === "light" || stored === "dark") return stored;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export default function App() {
   // Overlays or custom modal open/close states
   const [isMarketOpen, setIsMarketOpen] = useState(false);
   const [isAppWizardOpen, setIsAppWizardOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [isLearnOpen, setIsLearnOpen] = useState(false);
-  // Theme state: default to 'light' to match the provided screenshots perfectly, but toggleable.
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  // Theme state: default to system preference, persisted after the first choice.
+  const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
+  const [isLaunched, setIsLaunched] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'home' | 'chats' | 'pay' | 'discover' | 'profile'>('home');
   
   // State for active chatbot conversation or normal chat
@@ -116,17 +127,125 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [reputationScore, setReputationScore] = useState<number>(98);
   const [isOfflineMode, setIsOfflineMode] = useState<boolean>(false);
+  const isDark = theme === "dark";
+  const navActionMeta = {
+    home: {
+      label: "Post",
+      title: "Quick Post",
+      subtitle: "Share a thought, photo, or voice note.",
+      icon: "edit_square",
+    },
+    chats: {
+      label: "Compose",
+      title: "Compose Message",
+      subtitle: "Start a chat or a quick voice note.",
+      icon: "chat_bubble",
+    },
+    pay: {
+      label: "Pay",
+      title: "Move Money",
+      subtitle: "Top up, send, or review balance.",
+      icon: "payments",
+    },
+    discover: {
+      label: "Build",
+      title: "Build Something",
+      subtitle: "Launch a mini app, business, or community.",
+      icon: "apps",
+    },
+    profile: {
+      label: "Tools",
+      title: "System Actions",
+      subtitle: "Theme, support, and session controls.",
+      icon: "person",
+    },
+  } as const;
+  const launchPadMeta = {
+    home: {
+      eyebrow: "Home quick start",
+      title: "Create from Home",
+      description: "A fast launch pad for posts, stories, and voice notes.",
+      actions: [
+        { id: "text", icon: "notes", title: "Text post", copy: "Draft a short update." },
+        { id: "photo", icon: "image", title: "Photo story", copy: "Share a visual moment." },
+        { id: "voice", icon: "mic", title: "Voice note", copy: "Record a quick clip." },
+        { id: "chat", icon: "chat", title: "Open chats", copy: "Jump to your inbox." },
+      ],
+    },
+    chats: {
+      eyebrow: "Chats quick start",
+      title: "Compose in Chats",
+      description: "Simple entry points for conversation and translation.",
+      actions: [
+        { id: "new-chat", icon: "edit", title: "New message", copy: "Start a fresh thread." },
+        { id: "translate", icon: "auto_transcribe", title: "Translate", copy: "Show AI translation." },
+        { id: "voice-note", icon: "mic", title: "Voice note", copy: "Send a spoken update." },
+        { id: "summary", icon: "summarize", title: "Summary", copy: "Condense the thread." },
+      ],
+    },
+    pay: {
+      eyebrow: "Pay quick start",
+      title: "Move Money",
+      description: "Keep balance actions clean and easy to scan.",
+      actions: [
+        { id: "top-up", icon: "add_circle", title: "Top up", copy: "Add funds to wallet." },
+        { id: "send", icon: "send", title: "Send", copy: "Transfer in seconds." },
+        { id: "request", icon: "request_quote", title: "Request", copy: "Ask someone to pay." },
+        { id: "history", icon: "receipt_long", title: "History", copy: "Review transactions." },
+      ],
+    },
+    discover: {
+      eyebrow: "Discover quick start",
+      title: "Build Something",
+      description: "Presentation cards for businesses, apps, and communities.",
+      actions: [
+        { id: "mini-app", icon: "apps", title: "Mini app", copy: "Launch an AI builder." },
+        { id: "business", icon: "storefront", title: "Business", copy: "Open merchant setup." },
+        { id: "community", icon: "groups", title: "Community", copy: "Create a group space." },
+        { id: "agent", icon: "smart_toy", title: "AI agent", copy: "Set up an assistant." },
+      ],
+    },
+    profile: {
+      eyebrow: "Profile quick start",
+      title: "System Actions",
+      description: "Theme, support, and account controls in one clean place.",
+      actions: [
+        { id: "theme", icon: "dark_mode", title: "Theme", copy: "Switch the shell." },
+        { id: "settings", icon: "settings", title: "Settings", copy: "Open preferences." },
+        { id: "support", icon: "contact_support", title: "Support", copy: "Talk to the team." },
+        { id: "logout", icon: "logout", title: "Logout", copy: "End the demo session." },
+      ],
+    },
+  } as const;
+  const activeNavAction = navActionMeta[activeTab];
+  const activeLaunchPad = launchPadMeta[activeTab];
+  const navActionTone = {
+    home: "from-[#006A42] to-[#0A8F5A]",
+    chats: "from-[#243BFF] to-[#6E7CFF]",
+    pay: "from-[#F4B400] to-[#E08600]",
+    discover: "from-[#0A8F5A] to-[#46C07F]",
+    profile: "from-[#5B5B5B] to-[#0A8F5A]",
+  } as const;
+  const navActionSwatch = {
+    home: "bg-[rgba(0,106,66,0.12)] text-[#006A42]",
+    chats: "bg-[rgba(36,59,255,0.12)] text-[#243BFF]",
+    pay: "bg-[rgba(244,180,0,0.18)] text-[#A56B00]",
+    discover: "bg-[rgba(10,143,90,0.12)] text-[#0A8F5A]",
+    profile: "bg-[rgba(91,91,91,0.12)] text-[#5B5B5B]",
+  } as const;
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   // Sync theme with HTML tag
   useEffect(() => {
     const root = window.document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-      root.classList.remove('light');
-    } else {
-      root.classList.add('light');
-      root.classList.remove('dark');
-    }
+    root.dataset.theme = theme;
+    root.classList.toggle("dark", theme === "dark");
+    root.classList.toggle("light", theme === "light");
+    root.style.colorScheme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
   // Audio Progress simulation on play
@@ -149,6 +268,103 @@ export default function App() {
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleLaunchPadAction = (actionId: string) => {
+    setShowCreateMenu(false);
+
+    if (activeTab === "home") {
+      if (actionId === "chat") {
+        setActiveTab("chats");
+        triggerToast("Jumped to chats for the presentation.");
+        return;
+      }
+      triggerToast("Home quick action previewed.");
+      return;
+    }
+
+    if (activeTab === "chats") {
+      if (actionId === "new-chat") {
+        triggerToast("Opened a new chat draft.");
+        return;
+      }
+      if (actionId === "translate") {
+        triggerToast("AI translation preview enabled.");
+        return;
+      }
+      if (actionId === "voice-note") {
+        triggerToast("Voice note preview staged.");
+        return;
+      }
+      if (actionId === "summary") {
+        triggerToast("Summary preview ready.");
+        return;
+      }
+      triggerToast("Chat quick action previewed.");
+      return;
+    }
+
+    if (activeTab === "pay") {
+      if (actionId === "top-up") {
+        triggerToast("Top up preview opened.");
+        return;
+      }
+      if (actionId === "send") {
+        triggerToast("Send money previewed.");
+        return;
+      }
+      if (actionId === "request") {
+        triggerToast("Request payment previewed.");
+        return;
+      }
+      if (actionId === "history") {
+        triggerToast("Balance history previewed.");
+        return;
+      }
+      triggerToast("Wallet quick action previewed.");
+      return;
+    }
+
+    if (activeTab === "discover") {
+      if (actionId === "mini-app") {
+        triggerToast("Mini app builder preview staged.");
+        return;
+      }
+      if (actionId === "business") {
+        triggerToast("Business launch preview staged.");
+        return;
+      }
+      if (actionId === "community") {
+        triggerToast("Community launch preview staged.");
+        return;
+      }
+      if (actionId === "agent") {
+        setActiveTab("chats");
+        triggerToast("AI agent preview routed to chats.");
+        return;
+      }
+      triggerToast("Discover quick action previewed.");
+      return;
+    }
+
+    if (actionId === "theme") {
+      toggleTheme();
+      triggerToast(`Switched to ${theme === "light" ? "Dark" : "Light"} theme.`);
+      return;
+    }
+    if (actionId === "settings") {
+      triggerToast("System settings preview opened.");
+      return;
+    }
+    if (actionId === "support") {
+      triggerToast("Support terminal preview opened.");
+      return;
+    }
+    if (actionId === "logout") {
+      triggerToast("Logout routine staged for the presentation.");
+      return;
+    }
+    triggerToast("Profile quick action previewed.");
   };
 
   // Escrow wallet deduction simulation for connected subsystems
@@ -417,8 +633,37 @@ export default function App() {
     return chats.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.lastMessageText.toLowerCase().includes(searchQuery.toLowerCase()));
   };
 
+  const ThemeToggleButton = ({ className = "" }: { className?: string }) => (
+    <button
+      onClick={() => {
+        toggleTheme();
+        triggerToast(`Switched to ${theme === "light" ? "Dark" : "Light"} theme.`);
+      }}
+      aria-label="Toggle theme"
+      className={`inline-flex items-center justify-center rounded-full border transition-all active:scale-95 ${className} ${
+        isDark
+          ? "bg-[var(--app-brand-soft)] border-white/10 text-[var(--app-brand)] hover:brightness-110"
+          : "bg-black/5 border-black/5 text-[var(--app-brand-strong)] hover:bg-black/10"
+      }`}
+    >
+      <span className="material-symbols-outlined text-[18px]">
+        {isDark ? "light_mode" : "dark_mode"}
+      </span>
+    </button>
+  );
+
+  if (!isLaunched) {
+    return (
+      <LaunchFlow
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onLaunch={() => setIsLaunched(true)}
+      />
+    );
+  }
+
   return (
-    <div className={`min-h-screen text-on-surface antialiased bg-background pb-24 transition-colors duration-300 ${theme === 'dark' ? 'dark bg-[#09160f] text-[#d7e6db]' : 'light bg-[#f8f9fa] text-[#191c1d]'}`}>
+    <div className="app-shell min-h-screen bg-background text-on-surface antialiased pb-24 transition-colors duration-300">
       
       {/* Toast Alert pop-up */}
       <AnimatePresence>
@@ -442,14 +687,14 @@ export default function App() {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 100 }}
-            className={`fixed inset-0 z-50 flex flex-col ${theme === 'dark' ? 'bg-[#09160f]' : 'bg-[#f8f9fa]'}`}
+            className="fixed inset-0 z-50 flex flex-col bg-background"
           >
             {/* Top Bar matching Screen 2 */}
-            <header className={`flex justify-between items-center px-4 h-16 w-full z-45 border-b backdrop-blur-md sticky top-0 ${theme === 'dark' ? 'bg-[#09160f]/95 border-white/10' : 'bg-white/95 border-b-gray-200 shadow-sm'}`}>
+            <header className={`flex justify-between items-center px-4 h-16 w-full z-[45] border-b backdrop-blur-md sticky top-0 ${isDark ? 'bg-[rgba(15,29,21,0.95)] border-white/10' : 'bg-white/95 border-b-gray-200 shadow-sm'}`}>
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => { setSelectedChatId(null); setChatSummary(null); }}
-                  className={`p-2 rounded-full hover:bg-neutral-800/10 ${theme === 'dark' ? 'text-white' : 'text-neutral-900'}`}
+                  className={`p-2 rounded-full hover:bg-neutral-800/10 ${isDark ? 'text-white' : 'text-neutral-900'}`}
                 >
                   <span className="material-symbols-outlined">arrow_back</span>
                 </button>
@@ -471,7 +716,7 @@ export default function App() {
                   )}
                 </div>
                 <div>
-                  <h1 className={`font-semibold text-md ${theme === 'dark' ? 'text-[#d7e6db]' : 'text-neutral-900'}`}>{chats.find(c => c.id === selectedChatId)?.name}</h1>
+                  <h1 className={`font-semibold text-md ${isDark ? 'text-[#d7e6db]' : 'text-neutral-900'}`}>{chats.find(c => c.id === selectedChatId)?.name}</h1>
                   <p className="text-[#0A8F5A] text-[11px] uppercase tracking-widest font-semibold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Online
                   </p>
@@ -480,20 +725,20 @@ export default function App() {
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => triggerToast("Initiating voice call on VoIP relays...")}
-                  className={`hover:bg-neutral-800/10 p-2 rounded-full ${theme === 'dark' ? 'text-[#bdcabf]' : 'text-neutral-800'}`}
+                  className={`hover:bg-neutral-800/10 p-2 rounded-full ${isDark ? 'text-[#bdcabf]' : 'text-neutral-800'}`}
                 >
                   <span className="material-symbols-outlined">call</span>
                 </button>
                 <button 
                   onClick={() => triggerToast("Initiating secure video call...")}
-                  className={`hover:bg-neutral-800/10 p-2 rounded-full ${theme === 'dark' ? 'text-[#bdcabf]' : 'text-neutral-800'}`}
+                  className={`hover:bg-neutral-800/10 p-2 rounded-full ${isDark ? 'text-[#bdcabf]' : 'text-neutral-800'}`}
                 >
                   <span className="material-symbols-outlined">videocam</span>
                 </button>
                 
                 {/* AI Translate Toggle Section */}
                 <div className="h-6 w-px bg-white/10"></div>
-                <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full border ${theme === 'dark' ? 'bg-[#202d25] border-white/5' : 'bg-emerald-50 border-emerald-100'}`}>
+                <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full border ${isDark ? 'bg-[#202d25] border-white/5' : 'bg-emerald-50 border-emerald-100'}`}>
                   <span className="text-[10px] font-bold text-yellow-500 uppercase tracking-tighter">AI Translate</span>
                   <label className="relative inline-flex items-center cursor-pointer scale-75">
                     <input 
@@ -509,7 +754,7 @@ export default function App() {
             </header>
 
             {/* Smart Conversation Summary Tooltip */}
-            <div className={`p-3 relative z-10 sticky top-16 shadow-lg flex flex-col items-center gap-2 border-b ${theme === 'dark' ? 'bg-[#15221b] border-white/5' : 'bg-[#edeeef] border-gray-200'}`}>
+            <div className={`p-3 relative z-10 sticky top-16 shadow-lg flex flex-col items-center gap-2 border-b ${isDark ? 'bg-[#15221b] border-white/5' : 'bg-[#edeeef] border-gray-200'}`}>
               <div className="flex items-center gap-3 w-full justify-between max-w-4xl">
                 <p className="text-xs text-on-surface-variant font-medium">✨ Need a structured summary of this chat?</p>
                 <button 
@@ -526,7 +771,7 @@ export default function App() {
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`mt-2 p-3 w-full max-w-4xl rounded-xl border text-xs leading-relaxed ${theme === 'dark' ? 'bg-black/30 border-yellow-500/30 text-[#bdcabf]' : 'bg-white border-yellow-500/20 text-neutral-800'}`}
+                  className={`mt-2 p-3 w-full max-w-4xl rounded-xl border text-xs leading-relaxed ${isDark ? 'bg-black/30 border-yellow-500/30 text-[#bdcabf]' : 'bg-white border-yellow-500/20 text-neutral-800'}`}
                 >
                   <div className="font-bold text-yellow-500 mb-1 flex items-center gap-1">
                     <span className="material-symbols-outlined text-[14px]">psychology</span>
@@ -549,8 +794,8 @@ export default function App() {
                   <div key={m.id || idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] ${isMe ? 'ml-auto' : 'mr-auto'}`}>
                     <div className={`p-4 shadow-sm border ${
                       isMe 
-                        ? (theme === 'dark' ? 'bg-[#003920] border-emerald-500/20 text-white rounded-2xl rounded-tr-none' : 'bg-[#006a41] text-white rounded-2xl rounded-tr-none') 
-                        : (theme === 'dark' ? 'bg-[#202d25] border-white/5 text-[#d7e6db] rounded-2xl rounded-tl-none' : 'bg-white border-gray-200 text-neutral-900 rounded-2xl rounded-tl-none shadow-sm')
+                        ? (isDark ? 'bg-[#003920] border-emerald-500/20 text-white rounded-2xl rounded-tr-none' : 'bg-[#006a41] text-white rounded-2xl rounded-tr-none') 
+                        : (isDark ? 'bg-[#202d25] border-white/5 text-[#d7e6db] rounded-2xl rounded-tl-none' : 'bg-white border-gray-200 text-neutral-900 rounded-2xl rounded-tl-none shadow-sm')
                     } relative`}>
                       
                       {/* Transcribed text for foreign language chats */}
@@ -592,7 +837,7 @@ export default function App() {
                           </div>
 
                           {/* Smart Transcription block */}
-                          <div className={`p-3 rounded-xl border text-xs ${theme === 'dark' ? 'bg-[#111e17] border-white/5 text-[#bdcabf]' : 'bg-emerald-50/50 border-emerald-100 text-neutral-800'}`}>
+                          <div className={`p-3 rounded-xl border text-xs ${isDark ? 'bg-[#111e17] border-white/5 text-[#bdcabf]' : 'bg-emerald-50/50 border-emerald-100 text-neutral-800'}`}>
                             <div className="flex items-center gap-1.5 mb-1.5 text-[#0A8F5A] font-bold uppercase tracking-wider text-[9px]">
                               <span className="material-symbols-outlined text-[13px]">description</span>
                               Smart Transcript
@@ -628,7 +873,7 @@ export default function App() {
             </div>
 
             {/* Chat Input area footer matching image */}
-            <div className={`p-4 sticky bottom-0 border-t ${theme === 'dark' ? 'bg-[#09160f]/95 border-white/10' : 'bg-white border-gray-200'}`}>
+            <div className={`p-4 sticky bottom-0 border-t ${isDark ? 'bg-[#09160f]/95 border-white/10' : 'bg-white border-gray-200'}`}>
               <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto flex items-end gap-3 rounded-2xl glass-effect p-2">
                 <button 
                   type="button"
@@ -668,7 +913,7 @@ export default function App() {
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
-            className={`fixed inset-0 z-50 flex flex-col ${theme === 'dark' ? 'bg-[#09160f]' : 'bg-[#f8f9fa]'}`}
+            className="fixed inset-0 z-50 flex flex-col bg-background"
           >
             <header className="flex justify-between items-center px-4 h-16 bg-[#006a41] text-white">
               <div className="flex items-center gap-3">
@@ -753,7 +998,7 @@ export default function App() {
             <div className="relative cursor-pointer" onClick={() => setActiveTab('profile')}>
               <img 
                 className="w-10 h-10 rounded-full border border-white/15 object-cover" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCUrd8IdmPEwAec_n7YJHz59JrraFEHvie6GsT_mht_-RDEY3Q_vjkmdDYvbgq8nm1C2rqt2syCejFmES6YjjUiMDHFg5XfYDADdGhEwuVGlgT0Fd8yuZUDwM4Ocz_IL3pU_whFOQA1E0Qz4Ym9tak7SlhFu78xDHYwJFaOp0BelKYffJYglAsBLR-PUQzLfusE6HT0by7o7g47BI1n_7_Of40qvClr_CTwQ1P9f_XahWyFKaDZDbK6kx3bKlGeoIx5cH8iFurAGw" 
+                src="/africhat-mark.svg" 
                 alt="Godfrey" 
                 referrerPolicy="no-referrer"
               />
@@ -976,7 +1221,7 @@ export default function App() {
                     <img 
                       alt="Mini App Builder Graphics" 
                       className="w-full h-auto max-h-[105px] object-contain cursor-pointer transition-transform hover:scale-105 active:scale-95 duration-200" 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmnIQ86LDdmfMPp1DY-aWdpxRamuijUDkLNbsU__T7TQqJPnofovaTr4VXz_d_4aM8kxjstNjYC9oyJvmedei6kV-WzNpe0cEt5seTYRbc1tEkSds0Mqh_27qEbJ3MJaShNu1I0Lr1Bg5JghL0hru6DdMBHvuucamoBfrNWo89tZ8dwZX2Enlf_SE6GmBiv3NMaSds1-9XSUApeSqclh3uersO3MFixY9mAEIQLTpBVs1TIgFB7zXsPoxgnJyF9HDqObpbIgEwxd4"
+                      src="/africhat-mark.svg"
                       referrerPolicy="no-referrer"
                     />
                   </div>
@@ -1312,7 +1557,7 @@ export default function App() {
                     <img 
                       alt="User Profile" 
                       className="w-full h-full object-cover" 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYtwbxp_VB5JHh27eGaJWpRbY1k_3Ybsczc9VLlyD4nV7L8uGxtXpg8Dd-iS4-L3SEQKArd4bR_LmSyfHyM5O4yIkUKEiHHTgqtcHTiC16QudLo-oQ9A2v63uXFHcoIJJD2GTAbPeS0eFwZc6zTm4llLbdpbni4lHF5Pt3qTLp5YpCzOeBIzekXM-8RR4PBcJTyGtDJKE4V9-bsW-Be_z1Hk_wG4Nh_9PjiCte-ml1Tb5ykb9dJgYFF82WFn44e5yZ74xW3wfmdz0" 
+                      src="/africhat-mark.svg" 
                       referrerPolicy="no-referrer"
                     />
                   </div>
@@ -1447,7 +1692,7 @@ export default function App() {
                         <img 
                           alt="Kofi Mensah" 
                           className="w-14 h-14 rounded-full object-cover" 
-                          src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0oaPhMV6aQlYQ_s3UbJn8hAIF9_CfRX2Y0Qh1XVfw1gFPDms-OPdIwnriLLE1GsjifEsh7qMh0ycTiVjM6UknN03sOg-0RC4Pi0Q_CdNcosytOeqNBDRq7qfj20viyjyB8qs3lW784q2a5VQ5-VWL4wqcHpwTFfsoUURbyv87Vr5DIdiqmCAmE0HGeWfJPHZDXvXOcFrJ2O6-I87mrTsvCkUls_QJnoeznpAjZ_XIDBIkqLGpxSD2GiVVc6V3SuzW6kW6Uvz8iCU" 
+                          src="/africhat-mark.svg" 
                         />
                         <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-[#09110d] rounded-full"></div>
                       </div>
@@ -1506,7 +1751,7 @@ export default function App() {
                         <img 
                           alt="Global News" 
                           className="w-full h-full object-cover" 
-                          src="https://lh3.googleusercontent.com/aida-public/AB6AXuBruK4BJek998zYQlNzNBm1AAv4qzj_jlFtD55T45o7GJXa4ndK5LhBfClMW0TetA86_hatq3iocnGh9HfmB96Yih2KR5YHRt9Qh0AVv_nS5i-Gu_8tq4d9QlovRnSOA_GC0CqBeJLV9nBhnpIbwYZY798MWdQ41G6EHBrcHIF4rSzGhL2F9y7-JEuM02SZs1WxzGXdNOWe2o_ymZuABO2xv0xS-0MDRBpxlmmXyy0afPPYKlj6KxK0BBP8E56IwxkzUnwC6CTQis0" 
+                          src="/africhat-mark.svg" 
                         />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -1535,7 +1780,7 @@ export default function App() {
                       <img 
                         alt="Zainab Aliyu" 
                         className="w-14 h-14 rounded-full object-cover flex-shrink-0" 
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVWx6g4iNSXz322s-exe0TqhkuWkeYj5aEF94I25LKekP9I6GTZ-YDVjVKi3w2akQEQxBGQ9mFYKMjiezSd6VxVA2nY6dQzk5yGDKP7XXr-HwPpneKHnsYEi97LnJ7Cbfm5yvxY5OY7pusN1FNRbxry-_lnJpAtXpLEVDbJXhyUFhvNPLQrHf8p0o9-W4flBntcW-cVWDgU8-PTbQvhkTsGUXz3-f5uyk-lhxzDl2M3EONHpQ8lP6_f_6hVwwdhwgNOJgnSrzZYi0" 
+                        src="/africhat-mark.svg" 
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-baseline mb-0.5">
@@ -1558,7 +1803,7 @@ export default function App() {
                       <img 
                         alt="Fatima Diop" 
                         className="w-14 h-14 rounded-full object-cover flex-shrink-0" 
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAF_FPsprLFHJSXhLB4mBg0tAZjPORKesgzAmrcF2qfXN8xxsQ0ShKl1Rjgv0d_8k3K5LVz_AIgsk0OWfc1244mdvdcVC0kYItNCF6yXu1HCOsAXHgRandA1mYICmNzCfD63AIFhG94MH1zpEBuRUkc4bILsDcxcnJGsQ9imIymWuPe3M-3LRJkMl-l7QMUKSUy-HMisytjXpfwsQNpXOUdoCKWTruHYnM_xCHUim_Nqf71QTcgdYHJVP-KGx5D8y_Rfr5ZFRl63w" 
+                        src="/africhat-mark.svg" 
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-baseline mb-0.5">
@@ -1587,7 +1832,7 @@ export default function App() {
                       <img 
                         alt="AfriAI Bot" 
                         className="w-14 h-14 rounded-full object-cover border border-emerald-500/20 flex-shrink-0" 
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmnIQ86LDdmfMPp1DY-aWdpxRamuijUDkLNbsU__T7TQqJPnofovaTr4VXz_d_4aM8kxjstNjYC9oyJvmedei6kV-WzNpe0cEt5seTYRbc1tEkSds0Mqh_27qEbJ3MJaShNu1I0Lr1Bg5JghL0hru6DdMBHvuucamoBfrNWo89tZ8dwZX2Enlf_SE6GmBiv3NMaSds1-9XSUApeSqclh3uersO3MFixY9mAEIQLTpBVs1TIgFB7zXsPoxgnJyF9HDqObpbIgEwxd4" 
+                        src="/africhat-mark.svg" 
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-baseline mb-0.5">
@@ -1634,16 +1879,16 @@ export default function App() {
             >
               {/* Wallet Hero Card Panel matches image 3 precisely but optimized for light mode branding */}
               <section className={`relative overflow-hidden rounded-3xl p-6 border shadow-2xl transition-all ${
-                theme === 'dark' 
+                isDark 
                   ? 'bg-gradient-to-br from-[#09160f] to-[#15221b] border-white/10 text-white' 
                   : 'bg-gradient-to-br from-[#006A42] to-[#0A8F5A] border-none text-white'
               }`}>
                 <div className="absolute -top-12 -right-12 w-48 h-48 bg-yellow-400/5 rounded-full blur-3xl"></div>
                 
                 <div className="relative z-10 flex flex-col items-center py-4 text-center">
-                  <span className={`text-[10px] uppercase tracking-widest font-bold mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-emerald-100 opacity-90'}`}>Total Balance</span>
+                  <span className={`text-[10px] uppercase tracking-widest font-bold mb-2 ${isDark ? 'text-gray-400' : 'text-emerald-100 opacity-90'}`}>Total Balance</span>
                   <div className="flex items-baseline gap-1">
-                    <span className={`text-xl font-bold ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-300'}`}>{displayWalletCurrency}</span>
+                    <span className={`text-xl font-bold ${isDark ? 'text-yellow-400' : 'text-yellow-300'}`}>{displayWalletCurrency}</span>
                     <h1 className="text-4xl font-extrabold tracking-tighter text-white">
                       {isCurrencyConverted 
                         ? balance.toLocaleString() 
@@ -1664,15 +1909,15 @@ export default function App() {
  
                     {/* Instant African Conversion Toggle */}
                     <div className={`flex items-center justify-between border p-3 rounded-xl mt-2 ${
-                      theme === 'dark' 
+                      isDark 
                         ? 'bg-[#111e17] border-white/5 text-white' 
                         : 'bg-white/15 border-white/10 text-white backdrop-blur-sm'
                     }`}>
                       <div className="flex items-center gap-3 text-left">
-                        <span className={`material-symbols-outlined text-2xl ${theme === 'dark' ? 'text-[#0A8F5A]' : 'text-yellow-300'}`}>currency_exchange</span>
+                        <span className={`material-symbols-outlined text-2xl ${isDark ? 'text-[#0A8F5A]' : 'text-yellow-300'}`}>currency_exchange</span>
                         <div>
                           <p className="text-xs font-bold text-white">Instant African Conversion</p>
-                          <p className={`text-[10px] ${theme === 'dark' ? 'text-gray-400' : 'text-emerald-50/80'}`}>Convert Nigeria ₦ and Kenya KES instantly</p>
+                          <p className={`text-[10px] ${isDark ? 'text-gray-400' : 'text-emerald-50/80'}`}>Convert Nigeria ₦ and Kenya KES instantly</p>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -1698,7 +1943,7 @@ export default function App() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={`p-5 rounded-3xl border space-y-4 ${
-                    theme === 'dark' 
+                    isDark 
                       ? 'bg-neutral-900/40 border-yellow-500/10 text-white' 
                       : 'bg-white border-emerald-100 shadow-md text-neutral-900'
                   }`}
@@ -1710,9 +1955,9 @@ export default function App() {
                       onChange={(e) => setAddAmount(e.target.value)}
                       type="number" 
                       className={`flex-1 rounded-xl px-3 py-2 text-xs outline-none ${
-                        theme === 'dark' 
+                        isDark 
                           ? 'bg-black/30 border border-white/10 text-white' 
-                          : 'bg-neutral-50 border border-neutral-250 text-neutral-900'
+                        : 'bg-neutral-50 border border-neutral-200 text-neutral-900'
                       }`}
                       placeholder="Amount in NGN"
                     />
@@ -1722,7 +1967,7 @@ export default function App() {
                     <button 
                       onClick={() => setIsAddingMoney(false)} 
                       className={`px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer ${
-                        theme === 'dark' ? 'bg-neutral-805 text-gray-300 hover:bg-neutral-700' : 'bg-neutral-100 text-neutral-650 hover:bg-neutral-200'
+                        isDark ? 'bg-neutral-800 text-gray-300 hover:bg-neutral-700' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                       }`}
                     >
                       Cancel
@@ -1736,7 +1981,7 @@ export default function App() {
                 <button 
                   onClick={() => triggerToast("Launching secure QR Code Scanner...")}
                   className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all cursor-pointer ${
-                    theme === 'dark' 
+                    isDark 
                       ? 'bg-[#15221b] border-white/5 text-white hover:bg-[#1c2d24]' 
                       : 'bg-white border-neutral-200/70 text-neutral-800 hover:bg-emerald-50/20 hover:border-emerald-300 shadow-sm'
                   }`}
@@ -1750,7 +1995,7 @@ export default function App() {
                 <button 
                   onClick={() => triggerToast("Send Money: Please verify recipient AfriID")}
                   className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all cursor-pointer ${
-                    theme === 'dark' 
+                    isDark 
                       ? 'bg-[#15221b] border-white/5 text-white hover:bg-[#1c2d24]' 
                       : 'bg-white border-neutral-200/70 text-neutral-800 hover:bg-emerald-50/20 hover:border-emerald-300 shadow-sm'
                   }`}
@@ -1764,7 +2009,7 @@ export default function App() {
                 <button 
                   onClick={() => triggerToast("Request payment: Send link to groups")}
                   className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all cursor-pointer ${
-                    theme === 'dark' 
+                    isDark 
                       ? 'bg-[#15221b] border-white/5 text-white hover:bg-[#1c2d24]' 
                       : 'bg-white border-neutral-200/70 text-neutral-800 hover:bg-emerald-50/20 hover:border-emerald-300 shadow-sm'
                   }`}
@@ -1778,7 +2023,7 @@ export default function App() {
                 <button 
                   onClick={() => triggerToast("Select active business storefront checkout")}
                   className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all cursor-pointer ${
-                    theme === 'dark' 
+                    isDark 
                       ? 'bg-[#15221b] border-white/5 text-white hover:bg-[#1c2d24]' 
                       : 'bg-white border-neutral-200/70 text-neutral-800 hover:bg-emerald-50/20 hover:border-emerald-300 shadow-sm'
                   }`}
@@ -1793,22 +2038,22 @@ export default function App() {
               {/* Spend Insight Widgets (from image 3) */}
               <section className="grid grid-cols-2 gap-4">
                 <div className={`rounded-2xl border p-4 ${
-                  theme === 'dark' ? 'bg-[#111e17] border-white/5 text-white' : 'bg-white border-neutral-200/70 text-neutral-800 shadow-sm'
+                  isDark ? 'bg-[#111e17] border-white/5 text-white' : 'bg-white border-neutral-200/70 text-neutral-800 shadow-sm'
                 }`}>
                   <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Weekly Spend</p>
-                  <p className={`text-sm font-extrabold ${theme === 'dark' ? 'text-white' : 'text-neutral-900'}`}>{displayWalletCurrency}12,400</p>
-                  <div className={`w-full h-1 rounded-full mt-3 overflow-hidden ${theme === 'dark' ? 'bg-neutral-800' : 'bg-neutral-100'}`}>
+                  <p className={`text-sm font-extrabold ${isDark ? 'text-white' : 'text-neutral-900'}`}>{displayWalletCurrency}12,400</p>
+                  <div className={`w-full h-1 rounded-full mt-3 overflow-hidden ${isDark ? 'bg-neutral-800' : 'bg-neutral-100'}`}>
                     <div className="bg-[#0A8F5A] h-full w-2/3"></div>
                   </div>
                 </div>
 
                 <div className={`rounded-2xl border p-4 ${
-                  theme === 'dark' ? 'bg-[#111e17] border-white/5 text-white' : 'bg-white border-neutral-200/70 text-neutral-800 shadow-sm'
+                  isDark ? 'bg-[#111e17] border-white/5 text-white' : 'bg-white border-neutral-200/70 text-neutral-800 shadow-sm'
                 }`}>
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1">Goal: Savannah Car</p>
-                  <p className={`text-sm font-extrabold ${theme === 'dark' ? 'text-white' : 'text-neutral-900'}`}>{displayWalletCurrency}2.4M / 5M</p>
-                  <div className={`w-full h-1 rounded-full mt-3 overflow-hidden ${theme === 'dark' ? 'bg-neutral-800' : 'bg-neutral-100'}`}>
-                    <div className="bg-yellow-450 h-full w-[48%]"></div>
+                  <p className={`text-sm font-extrabold ${isDark ? 'text-white' : 'text-neutral-900'}`}>{displayWalletCurrency}2.4M / 5M</p>
+                  <div className={`w-full h-1 rounded-full mt-3 overflow-hidden ${isDark ? 'bg-neutral-800' : 'bg-neutral-100'}`}>
+                    <div className="bg-yellow-400 h-full w-[48%]"></div>
                   </div>
                 </div>
               </section>
@@ -1827,26 +2072,26 @@ export default function App() {
                       <div 
                         key={tx.id} 
                         className={`flex items-center justify-between p-4 rounded-[22px] border transition-all ${
-                          theme === 'dark' 
+                          isDark 
                             ? 'bg-[#111e17] border-white/5 text-white hover:border-yellow-400/20' 
                             : 'bg-white border-neutral-200/60 text-neutral-800 hover:border-emerald-600/20 hover:shadow-sm shadow-sm'
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                            theme === 'dark' ? 'bg-black/20 text-yellow-400' : 'bg-amber-50 text-amber-600 border border-amber-100/50'
+                            isDark ? 'bg-black/20 text-yellow-400' : 'bg-amber-50 text-amber-600 border border-amber-100/50'
                           }`}>
                             <span className="material-symbols-outlined">
                               {tx.category === 'deposit' ? 'account_balance_wallet' : tx.category === 'travel' ? 'language' : 'shopping_cart'}
                             </span>
                           </div>
                           <div>
-                            <p className={`text-xs font-bold ${theme === 'dark' ? 'text-white' : 'text-neutral-900'}`}>{tx.title}</p>
+                            <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-neutral-900'}`}>{tx.title}</p>
                             <p className="text-[10px] text-gray-500">{tx.date}, {tx.time}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className={`text-xs font-black ${isPositive ? 'text-emerald-600 dark:text-[#6ddb9f]' : 'text-rose-500 dark:text-rose-450'}`}>
+                          <p className={`text-xs font-black ${isPositive ? 'text-emerald-600 dark:text-[#6ddb9f]' : 'text-rose-500 dark:text-rose-400'}`}>
                             {isPositive ? '+' : '-'}{tx.currency}{Math.abs(tx.amount).toLocaleString()}
                           </p>
                           <span className="text-[8px] uppercase font-bold text-gray-400 tracking-wider">
@@ -1861,19 +2106,19 @@ export default function App() {
 
               {/* Promoted card layout matches bottom of wallet. Beautiful emerald background in light mode */}
               <section className={`p-6 rounded-3xl relative overflow-hidden group cursor-pointer border transition-all ${
-                theme === 'dark' 
+                isDark 
                   ? 'bg-gradient-to-br from-[#111e17] to-[#09160f] border-emerald-500/10' 
                   : 'bg-gradient-to-br from-[#024a2f] to-[#006a41] border-none shadow-md hover:shadow-lg'
               }`}>
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
                     <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase border ${
-                      theme === 'dark' 
+                      isDark 
                         ? 'bg-[#006a41]/30 text-[#6ddb9f] border-[#006a41]/50' 
                         : 'bg-white/20 text-yellow-300 border-white/20'
                     }`}>New Feature</span>
                     <h3 className="text-sm font-extrabold text-white mt-2">Virtual USD Card</h3>
-                    <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-emerald-100/90'}`}>Pay for international services instantly with 0% markup fee.</p>
+                    <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-emerald-100/90'}`}>Pay for international services instantly with 0% markup fee.</p>
                   </div>
                   <div className="w-14 h-14 opacity-25">
                     <span className="material-symbols-outlined text-[54px] text-yellow-400">credit_card</span>
@@ -2168,14 +2413,14 @@ export default function App() {
                   <div className="bg-white rounded-[24px] border border-neutral-100 p-4 flex items-center justify-between shadow-sm hover:shadow transition-all relative">
                     <div className="flex items-center gap-4">
                       <img 
-                        className="w-[66px] h-[66px] rounded-[18px] object-cover border border-neutral-55/20 shrink-0 shadow-sm"
+                        className="w-[66px] h-[66px] rounded-[18px] object-cover border border-neutral-100/20 shrink-0 shadow-sm"
                         src="https://images.unsplash.com/photo-1590534247854-e97d5e3feef6?w=150&q=80"
                         alt="Lagos Finest Tailors"
                         referrerPolicy="no-referrer"
                       />
                       <div>
                         <h4 className="font-extrabold text-[14px] text-neutral-900 leading-snug">Lagos Finest Tailors</h4>
-                        <p className="text-[11px] text-neutral-450 font-bold mt-0.5">1.2km away • Top Rated</p>
+                        <p className="text-[11px] text-neutral-500 font-bold mt-0.5">1.2km away • Top Rated</p>
                         <span className="inline-block mt-1.5 bg-emerald-50 text-[9px] font-black tracking-wide text-[#006A42] px-2 py-0.5 rounded-md border border-emerald-100">
                           OPEN NOW
                         </span>
@@ -2193,14 +2438,14 @@ export default function App() {
                   <div className="bg-white rounded-[24px] border border-neutral-100 p-4 flex items-center justify-between shadow-sm hover:shadow transition-all relative">
                     <div className="flex items-center gap-4">
                       <img 
-                        className="w-[66px] h-[66px] rounded-[18px] object-cover border border-neutral-55/20 shrink-0 shadow-sm"
+                        className="w-[66px] h-[66px] rounded-[18px] object-cover border border-neutral-100/20 shrink-0 shadow-sm"
                         src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=150&q=80"
                         alt="Mama's Kitchen"
                         referrerPolicy="no-referrer"
                       />
                       <div>
                         <h4 className="font-extrabold text-[14px] text-neutral-900 leading-snug">Mama's Kitchen</h4>
-                        <p className="text-[11px] text-neutral-450 font-bold mt-0.5">0.8km away • Restaurant</p>
+                        <p className="text-[11px] text-neutral-500 font-bold mt-0.5">0.8km away • Restaurant</p>
                         <span className="inline-block mt-1.5 bg-amber-50 text-[9px] font-black tracking-wide text-amber-700 px-2 py-0.5 rounded-md border border-amber-100">
                           BUSY
                         </span>
@@ -2302,7 +2547,7 @@ export default function App() {
                     </div>
                     <button 
                       onClick={() => triggerToast("Your profile summary submitted. Globacom HR recruitment suite alerted.")} 
-                      className="text-[11px] font-extrabold py-2 px-3.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E4E6EB] text-neutral-850 transition-all cursor-pointer active:scale-95 shadow-sm"
+                      className="text-[11px] font-extrabold py-2 px-3.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E4E6EB] text-neutral-800 transition-all cursor-pointer active:scale-95 shadow-sm"
                     >
                       Apply Now
                     </button>
@@ -2321,7 +2566,7 @@ export default function App() {
                     </div>
                     <button 
                       onClick={() => triggerToast("Your client profile summary submitted. AfriPay recruitment suite alerted.")} 
-                      className="text-[11px] font-extrabold py-2 px-3.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E4E6EB] text-neutral-850 transition-all cursor-pointer active:scale-95 shadow-sm"
+                      className="text-[11px] font-extrabold py-2 px-3.5 rounded-xl bg-[#F0F2F5] hover:bg-[#E4E6EB] text-neutral-800 transition-all cursor-pointer active:scale-95 shadow-sm"
                     >
                       Apply Now
                     </button>
@@ -2352,7 +2597,7 @@ export default function App() {
                       </div>
                       <div>
                         <h4 className="font-extrabold text-[13.5px] text-neutral-900 leading-none">Somi</h4>
-                        <p className="text-[10px] text-neutral-405 font-bold mt-1">Cultural Guide</p>
+                        <p className="text-[10px] text-neutral-500 font-bold mt-1">Cultural Guide</p>
                       </div>
                     </div>
                     <button 
@@ -2375,7 +2620,7 @@ export default function App() {
                       </div>
                       <div>
                         <h4 className="font-extrabold text-[13.5px] text-neutral-900 leading-none">FinBot</h4>
-                        <p className="text-[10px] text-neutral-405 font-bold mt-1">Finance Expert</p>
+                        <p className="text-[10px] text-neutral-500 font-bold mt-1">Finance Expert</p>
                       </div>
                     </div>
                     <button 
@@ -2495,7 +2740,7 @@ export default function App() {
                     <img 
                       alt="AfriChat Logo" 
                       className="w-full h-full object-cover" 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYtwbxp_VB5JHh27eGaJWpRbY1k_3Ybsczc9VLlyD4nV7L8uGxtXpg8Dd-iS4-L3SEQKArd4bR_LmSyfHyM5O4yIkUKEiHHTgqtcHTiC16QudLo-oQ9A2v63uXFHcoIJJD2GTAbPeS0eFwZc6zTm4llLbdpbni4lHF5Pt3qTLp5YpCzOeBIzekXM-8RR4PBcJTyGtDJKE4V9-bsW-Be_z1Hk_wG4Nh_9PjiCte-ml1Tb5ykb9dJgYFF82WFn44e5yZ74xW3wfmdz0" 
+                      src="/africhat-mark.svg" 
                       referrerPolicy="no-referrer"
                     />
                   </div>
@@ -2519,7 +2764,7 @@ export default function App() {
                       <img 
                         alt="Godfrey" 
                         className="w-full h-full object-cover" 
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYtwbxp_VB5JHh27eGaJWpRbY1k_3Ybsczc9VLlyD4nV7L8uGxtXpg8Dd-iS4-L3SEQKArd4bR_LmSyfHyM5O4yIkUKEiHHTgqtcHTiC16QudLo-oQ9A2v63uXFHcoIJJD2GTAbPeS0eFwZc6zTm4llLbdpbni4lHF5Pt3qTLp5YpCzOeBIzekXM-8RR4PBcJTyGtDJKE4V9-bsW-Be_z1Hk_wG4Nh_9PjiCte-ml1Tb5ykb9dJgYFF82WFn44e5yZ74xW3wfmdz0"
+                        src="/africhat-mark.svg"
                         referrerPolicy="no-referrer"
                       />
                     </div>
@@ -2600,7 +2845,7 @@ export default function App() {
                   <div>
                     <h3 className="px-2 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Services &amp; Tools</h3>
                     
-                    <div className="bg-white dark:bg-[#12241a]/30 border border-gray-150 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="bg-white dark:bg-[#12241a]/30 border border-gray-200 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
                       {/* My Businesses */}
                       <div 
                         onClick={() => triggerToast("Opening My Businesses Hub: Abuja Rides, Gudu Groceries dashboard ready.")}
@@ -2659,7 +2904,7 @@ export default function App() {
                   <div>
                     <h3 className="px-2 py-1 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Account &amp; System</h3>
                     
-                    <div className="bg-white dark:bg-[#12241a]/30 border border-gray-150 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="bg-white dark:bg-[#12241a]/30 border border-gray-200 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm">
                       {/* Settings */}
                       <div 
                         onClick={() => triggerToast("System configuration: mesh relay encryption and automatic translations synced.")}
@@ -2679,28 +2924,28 @@ export default function App() {
                       {/* Design System Theme Switcher */}
                       <div 
                         onClick={() => {
-                          setTheme(theme === 'light' ? 'dark' : 'light');
+                          toggleTheme();
                           triggerToast(`Switched to ${theme === 'light' ? 'Dark' : 'Light'} theme.`);
                         }}
                         className="flex items-center justify-between p-4 hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors group cursor-pointer"
                       >
                         <div className="flex items-center gap-4">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                            theme === 'dark' ? 'bg-[#0A8F5A]/10 text-[#6ddb9f]' : 'bg-[#006a41]/10 text-[#006a41]'
+                            isDark ? 'bg-[#0A8F5A]/10 text-[#6ddb9f]' : 'bg-[#006a41]/10 text-[#006a41]'
                           }`}>
                             <span className="material-symbols-outlined text-lg">
-                              {theme === 'dark' ? 'dark_mode' : 'light_mode'}
+                              {isDark ? 'dark_mode' : 'light_mode'}
                             </span>
                           </div>
                           <div>
                             <span className="text-sm font-semibold text-neutral-800 dark:text-gray-100">Design Theme</span>
-                            <p className="text-[10px] text-gray-400 font-medium">Currently: {theme === 'dark' ? 'Dark' : 'Light'} Mode</p>
+                            <p className="text-[10px] text-gray-400 font-medium">Currently: {isDark ? 'Dark' : 'Light'} Mode</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-gray-400 font-extrabold uppercase">{theme === 'dark' ? 'Dark' : 'Light'}</span>
-                          <div className={`w-9 h-5 rounded-full p-0.5 transition-colors ${theme === 'dark' ? 'bg-[#0A8F5A]' : 'bg-neutral-300'}`}>
-                            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${theme === 'dark' ? 'translate-x-[16px]' : 'translate-x-0'}`}></div>
+                          <span className="text-[10px] text-gray-400 font-extrabold uppercase">{isDark ? 'Dark' : 'Light'}</span>
+                          <div className={`w-9 h-5 rounded-full p-0.5 transition-colors ${isDark ? 'bg-[#0A8F5A]' : 'bg-neutral-300'}`}>
+                            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isDark ? 'translate-x-[16px]' : 'translate-x-0'}`}></div>
                           </div>
                         </div>
                       </div>
@@ -2742,276 +2987,125 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* DYNAMIC ACTION SHEET / MENU FOR LARGE CREATOR "+" BUTTON */}
+      {/* CONTEXTUAL QUICK ACTION SHEET */}
       <AnimatePresence>
         {showCreateMenu && (
           <div className="fixed inset-0 z-50 flex items-end justify-center">
-            {/* Backdrop */}
-            <div 
+            <motion.div
               onClick={() => setShowCreateMenu(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            ></div>
-            
-            {/* Bottom Panel / Roll-up Creator Workspace */}
-            <motion.div 
-              initial={{ y: "100%", x: 0 }}
-              animate={{ y: 0, x: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300, mass: 0.8 }}
-              className={`w-full max-w-lg rounded-t-[32px] overflow-hidden border-t shadow-2xl flex flex-col z-10 transition-all duration-300 ${
-                theme === 'dark' 
-                  ? 'bg-[#0f1914] border-white/10 text-white' 
-                  : 'bg-white border-neutral-200 text-neutral-950'
-              }`}
-              style={{ height: isCreatorExpanded ? "98vh" : "82vh" }}
-            >
-              {/* Image Banner Header block matching PRD with click or scroll-to-expand support */}
-              <div className="flex flex-col bg-[#006A42] text-white shrink-0 shadow-md select-none">
-                {/* Visual Pull Notch Handle / Click-to-Expand banner */}
-                <div 
-                  onClick={() => setIsCreatorExpanded(prev => !prev)}
-                  className="w-full pt-2 pb-1 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors"
-                  title="Scroll up or click here to expand to full screen"
-                >
-                  <div className="w-12 h-1 bg-white/35 rounded-full"></div>
-                  <div className="flex items-center gap-1 mt-1 opacity-70">
-                    <span className="material-symbols-outlined text-[13px] animate-bounce">
-                      {isCreatorExpanded ? 'keyboard_double_arrow_down' : 'keyboard_double_arrow_up'}
-                    </span>
-                    <span className="text-[8px] uppercase font-black tracking-widest font-mono">
-                      {isCreatorExpanded ? 'Swipe Down or Click to Collapse' : 'Scroll Up or Click to Expand'}
-                    </span>
-                  </div>
-                </div>
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/55 backdrop-blur-sm"
+            />
 
-                <div className="flex items-center justify-between p-4 pt-1">
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmnIQ86LDdmfMPp1DY-aWdpxRamuijUDkLNbsU__T7TQqJPnofovaTr4VXz_d_4aM8kxjstNjYC9oyJvmedei6kV-WzNpe0cEt5seTYRbc1tEkSds0Mqh_27qEbJ3MJaShNu1I0Lr1Bg5JghL0hru6DdMBHvuucamoBfrNWo89tZ8dwZX2Enlf_SE6GmBiv3NMaSds1-9XSUApeSqclh3uersO3MFixY9mAEIQLTpBVs1TIgFB7zXsPoxgnJyF9HDqObpbIgEwxd4" 
-                      alt="Avatar" 
-                      className="w-10 h-10 rounded-full object-cover border-2 border-white/20"
-                      referrerPolicy="no-referrer"
-                    />
-                    <span className="text-[17px] font-black tracking-tight text-white">Create Workspace</span>
+            <motion.div
+              initial={{ y: "100%", opacity: 0.95, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1, height: isCreatorExpanded ? "92vh" : "76vh" }}
+              exit={{ y: "100%", opacity: 0.95, scale: 0.98 }}
+              transition={{ type: "spring", damping: 28, stiffness: 260, mass: 0.9 }}
+              className={`relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-t-[34px] border-t shadow-[0_-30px_80px_rgba(0,0,0,0.25)] ${
+                theme === "dark"
+                  ? "bg-[#101a15] border-white/10 text-white"
+                  : "bg-white border-neutral-200 text-neutral-950"
+              }`}
+            >
+              <div className={`shrink-0 px-5 pt-3 pb-5 ${theme === "dark" ? "bg-[#0d160f]" : "bg-[#f8fbf9]"}`}>
+                <button
+                  onClick={() => setIsCreatorExpanded((prev) => !prev)}
+                  className="mx-auto flex flex-col items-center gap-2 rounded-full px-4 py-2 transition-colors hover:bg-black/5 active:bg-black/10"
+                  title={isCreatorExpanded ? "Swipe down to collapse" : "Swipe up to expand"}
+                >
+                  <div className="h-1.5 w-14 rounded-full bg-black/20 dark:bg-white/25" />
+                  <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.32em] text-on-surface-variant">
+                    <span className="material-symbols-outlined text-[13px]">
+                      {isCreatorExpanded ? "keyboard_double_arrow_down" : "keyboard_double_arrow_up"}
+                    </span>
+                    {isCreatorExpanded ? "Swipe down to collapse" : "Swipe up to expand"}
                   </div>
-                  <button 
-                    onClick={() => setShowCreateMenu(false)}
-                    className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 active:scale-90 flex items-center justify-center transition-all cursor-pointer"
-                    title="Close Workspace"
+                </button>
+
+                <div className="mt-4 flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.32em] text-brand">
+                      {activeLaunchPad.eyebrow}
+                    </p>
+                    <h2 className="font-display text-2xl font-black tracking-tight sm:text-[2rem]">
+                      {activeLaunchPad.title}
+                    </h2>
+                    <p className="max-w-md text-sm leading-6 text-on-surface-variant">
+                      {activeLaunchPad.description}
+                    </p>
+                  </div>
+                  <div
+                    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${navActionSwatch[activeTab]} shadow-lg`}
                   >
-                    <span className="material-symbols-outlined text-[18px]">close</span>
-                  </button>
+                    <span className="material-symbols-outlined text-[28px]">
+                      {activeNavAction.icon}
+                    </span>
+                  </div>
                 </div>
               </div>
-              
-              {/* Scrollable Container - onScroll expands automatically to full screen */}
-              <div 
+
+              <div
                 onScroll={(e) => {
                   const target = e.currentTarget;
-                  // If user scrolls up or down past 15px, expand automatically
-                  if (target.scrollTop > 15 && !isCreatorExpanded) {
+                  if (target.scrollTop > 12 && !isCreatorExpanded) {
                     setIsCreatorExpanded(true);
                   }
                 }}
-                className="flex-1 overflow-y-auto custom-scrollbar"
+                className="flex-1 overflow-y-auto custom-scrollbar px-5 py-5"
               >
-                
-                {/* Hero Title */}
-                <div className="p-6 pb-2">
-                  <h2 className="text-[25px] font-extrabold tracking-tight leading-tight text-neutral-900 dark:text-neutral-50">
-                    What's on your mind?
-                  </h2>
-                  <p className="text-xs text-neutral-500 dark:text-gray-400 font-medium leading-relaxed mt-1">
-                    Choose a way to express yourself or build something new.
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {activeLaunchPad.actions.map((action, index) => (
+                    <button
+                      key={action.id}
+                      onClick={() => handleLaunchPadAction(action.id)}
+                      className={`group rounded-[24px] border p-4 text-left transition-all active:scale-[0.99] ${
+                        theme === "dark"
+                          ? "border-white/8 bg-white/[0.03] hover:bg-white/[0.06]"
+                          : "border-neutral-200 bg-white hover:bg-neutral-50 hover:shadow-md"
+                      }`}
+                    >
+                      <div
+                        className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${
+                          index === 0
+                            ? "bg-[rgba(0,106,66,0.12)] text-[#006A42]"
+                            : index === 1
+                              ? "bg-[rgba(244,180,0,0.16)] text-[#A56B00]"
+                              : index === 2
+                                ? "bg-[rgba(36,59,255,0.12)] text-[#243BFF]"
+                                : "bg-[rgba(10,143,90,0.12)] text-[#0A8F5A]"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[24px]">{action.icon}</span>
+                      </div>
+                      <p className="text-sm font-bold">{action.title}</p>
+                      <p className="mt-1 text-[11px] leading-5 text-on-surface-variant">{action.copy}</p>
+                    </button>
+                  ))}
+                </div>
+
+                <div
+                  className={`mt-4 rounded-[28px] border p-4 ${
+                    theme === "dark"
+                      ? "border-white/8 bg-white/[0.03]"
+                      : "border-neutral-200 bg-surface"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.26em] text-brand">
+                        Presentation mode
+                      </p>
+                      <h3 className="mt-1 text-base font-black">No backend connected</h3>
+                    </div>
+                    <span className="material-symbols-outlined text-[26px] text-brand">slideshow</span>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+                    This launcher is a visual preview only. The actions are mock surfaces for the presentation.
                   </p>
                 </div>
-                
-                {/* Section: CREATE POST Grid */}
-                <div className="px-6 py-4">
-                  <h4 className="text-[11px] font-black tracking-wider text-emerald-800 dark:text-[#6ddb9f] uppercase mb-4">
-                    Create Post
-                  </h4>
-                  
-                  <div className="grid grid-cols-4 gap-2">
-                    
-                    {/* Text */}
-                    <div 
-                      onClick={() => {
-                        setShowCreateMenu(false);
-                        triggerToast("Text editor opened: started a community thread draft.");
-                      }}
-                      className="flex flex-col items-center text-center cursor-pointer group"
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 text-[#006a41] dark:text-[#6ddb9f] flex items-center justify-center group-hover:scale-105 active:scale-95 transition-all shadow-sm">
-                        <span className="material-symbols-outlined text-[24px]">notes</span>
-                      </div>
-                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-250 mt-2">Text</span>
-                      <span className="text-[9px] text-neutral-400 dark:text-neutral-500 leading-tight mt-0.5 px-0.5">Share your thoughts</span>
-                    </div>
-
-                    {/* Image */}
-                    <div 
-                      onClick={() => {
-                        setShowCreateMenu(false);
-                        triggerToast("Image browser launched; ready for memories upload.");
-                      }}
-                      className="flex flex-col items-center text-center cursor-pointer group"
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/20 text-yellow-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-105 active:scale-95 transition-all shadow-sm">
-                        <span className="material-symbols-outlined text-[24px]">image</span>
-                      </div>
-                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-250 mt-2">Image</span>
-                      <span className="text-[9px] text-neutral-400 dark:text-neutral-500 leading-tight mt-0.5 px-0.5">Photos & memories</span>
-                    </div>
-
-                    {/* Video */}
-                    <div 
-                      onClick={() => {
-                        setShowCreateMenu(false);
-                        triggerToast("Video reel manager compiled; record shorts clips.");
-                      }}
-                      className="flex flex-col items-center text-center cursor-pointer group"
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-450 flex items-center justify-center group-hover:scale-105 active:scale-95 transition-all shadow-sm">
-                        <span className="material-symbols-outlined text-[24px]">slideshow</span>
-                      </div>
-                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-250 mt-2">Video</span>
-                      <span className="text-[9px] text-neutral-400 dark:text-neutral-500 leading-tight mt-0.5 px-0.5">Short clips & stories</span>
-                    </div>
-
-                    {/* Voice */}
-                    <div 
-                      onClick={() => {
-                        setShowCreateMenu(false);
-                        triggerToast("Voice mixer launched; record immersive speech snippet.");
-                      }}
-                      className="flex flex-col items-center text-center cursor-pointer group"
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-sky-50 dark:bg-sky-950/20 text-sky-600 dark:text-sky-400 flex items-center justify-center group-hover:scale-105 active:scale-95 transition-all shadow-sm">
-                        <span className="material-symbols-outlined text-[24px]">mic</span>
-                      </div>
-                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-250 mt-2">Voice</span>
-                      <span className="text-[9px] text-neutral-400 dark:text-neutral-500 leading-tight mt-0.5 px-0.5 font-medium">Audio notes</span>
-                    </div>
-
-                  </div>
-                </div>
-
-                <div className="mx-6 my-2 border-t border-gray-100 dark:border-white/5"></div>
-
-                {/* Section: LAUNCH & BUILD Lists */}
-                <div className="px-6 py-4 pb-16">
-                  <h4 className="text-[11px] font-black tracking-wider text-emerald-800 dark:text-[#6ddb9f] uppercase mb-4">
-                    Launch & Build
-                  </h4>
-                  
-                  <div className="space-y-3.5">
-                    
-                    {/* Create Business */}
-                    <div 
-                      onClick={() => {
-                        setShowCreateMenu(false);
-                        setIsMarketOpen(true);
-                        triggerToast("Opened AfriMarket Merchant portal console.");
-                      }}
-                      className="flex items-center justify-between p-4 bg-neutral-50/50 dark:bg-white/5 border border-neutral-150/50 dark:border-white/5 rounded-2xl cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/10 active:scale-[0.99] transition-all group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-amber-950/30 text-amber-650 dark:text-amber-400 flex items-center justify-center shadow-inner">
-                          <span className="material-symbols-outlined text-[22px]">card_travel</span>
-                        </div>
-                        <div>
-                          <h5 className="font-extrabold text-[14px] text-neutral-900 dark:text-neutral-100 leading-none">
-                            Create Business
-                          </h5>
-                          <p className="text-[11px] text-neutral-500 dark:text-gray-400 mt-1.5 leading-tight font-medium">
-                            Launch your own digital business.
-                          </p>
-                        </div>
-                      </div>
-                      <span className="material-symbols-outlined text-neutral-400 group-hover:translate-x-1.5 transition-transform text-lg">chevron_right</span>
-                    </div>
-
-                    {/* Create Mini App */}
-                    <div 
-                      onClick={() => {
-                        setShowCreateMenu(false);
-                        setIsAppWizardOpen(true);
-                      }}
-                      className="flex items-center justify-between p-4 bg-neutral-50/50 dark:bg-white/5 border border-neutral-150/50 dark:border-white/5 rounded-2xl cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/10 active:scale-[0.99] transition-all group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-[#6ddb9f] flex items-center justify-center shadow-inner">
-                          <span className="material-symbols-outlined text-[22px]">apps</span>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h5 className="font-extrabold text-[14px] text-neutral-900 dark:text-neutral-100 leading-none">
-                              Create Mini App
-                            </h5>
-                            <span className="bg-[#F4B400] text-black text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tight shadow-sm scale-90 -translate-y-0.5">
-                              AI POWER
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-neutral-500 dark:text-gray-400 mt-1.5 leading-tight font-medium">
-                            Build a powerful app with AI assistance.
-                          </p>
-                        </div>
-                      </div>
-                      <span className="material-symbols-outlined text-neutral-400 group-hover:translate-x-1.5 transition-transform text-lg">chevron_right</span>
-                    </div>
-
-                    {/* Create Community */}
-                    <div 
-                      onClick={() => {
-                        setShowCreateMenu(false);
-                        triggerToast("Loaded AfriCommunity launch template workspace.");
-                      }}
-                      className="flex items-center justify-between p-4 bg-neutral-50/50 dark:bg-white/5 border border-neutral-150/50 dark:border-white/5 rounded-2xl cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/10 active:scale-[0.99] transition-all group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-950/30 text-teal-650 dark:text-teal-400 flex items-center justify-center shadow-inner">
-                          <span className="material-symbols-outlined text-[22px]">diversity_3</span>
-                        </div>
-                        <div>
-                          <h5 className="font-extrabold text-[14px] text-neutral-900 dark:text-neutral-100 leading-none">
-                            Create Community
-                          </h5>
-                          <p className="text-[11px] text-neutral-500 dark:text-gray-400 mt-1.5 leading-tight font-medium">
-                            Start a new social community or group.
-                          </p>
-                        </div>
-                      </div>
-                      <span className="material-symbols-outlined text-neutral-400 group-hover:translate-x-1.5 transition-transform text-lg">chevron_right</span>
-                    </div>
-
-                    {/* Create AI Agent */}
-                    <div 
-                      onClick={() => {
-                        setShowCreateMenu(false);
-                        triggerToast("AfriAI customized bot model builder active.");
-                      }}
-                      className="flex items-center justify-between p-4 bg-neutral-50/50 dark:bg-white/5 border border-neutral-150/50 dark:border-white/5 rounded-2xl cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/10 active:scale-[0.99] transition-all group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-neutral-100 dark:bg-neutral-900/40 text-neutral-600 dark:text-gray-400 flex items-center justify-center shadow-inner">
-                          <span className="material-symbols-outlined text-[22px]">smart_toy</span>
-                        </div>
-                        <div>
-                          <h5 className="font-extrabold text-[14px] text-neutral-900 dark:text-neutral-100 leading-none">
-                            Create AI Agent
-                          </h5>
-                          <p className="text-[11px] text-neutral-500 dark:text-gray-400 mt-1.5 leading-tight font-medium">
-                            Launch your personal or business AI assistant.
-                          </p>
-                        </div>
-                      </div>
-                      <span className="material-symbols-outlined text-neutral-400 group-hover:translate-x-1.5 transition-transform text-lg">chevron_right</span>
-                    </div>
-
-                  </div>
-                </div>
-
               </div>
             </motion.div>
           </div>
@@ -3075,7 +3169,7 @@ export default function App() {
                       <img 
                         alt="Ayo Balogun" 
                         className="w-full h-full object-cover rounded-full" 
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYtwbxp_VB5JHh27eGaJWpRbY1k_3Ybsczc9VLlyD4nV7L8uGxtXpg8Dd-iS4-L3SEQKArd4bR_LmSyfHyM5O4yIkUKEiHHTgqtcHTiC16QudLo-oQ9A2v63uXFHcoIJJD2GTAbPeS0eFwZc6zTm4llLbdpbni4lHF5Pt3qTLp5YpCzOeBIzekXM-8RR4PBcJTyGtDJKE4V9-bsW-Be_z1Hk_wG4Nh_9PjiCte-ml1Tb5ykb9dJgYFF82WFn44e5yZ74xW3wfmdz0" 
+                        src="/africhat-mark.svg" 
                       />
                     </div>
                     {/* Speaks indicator */}
@@ -3098,7 +3192,7 @@ export default function App() {
                       <img 
                         alt="Chioma Ade" 
                         className="w-full h-full object-cover rounded-full" 
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0oaPhMV6aQlYQ_s3UbJn8hAIF9_CfRX2Y0Qh1XVfw1gFPDms-OPdIwnriLLE1GsjifEsh7qMh0ycTiVjM6UknN03sOg-0RC4Pi0Q_CdNcosytOeqNBDRq7qfj20viyjyB8qs3lW784q2a5VQ5-VWL4wqcHpwTFfsoUURbyv87Vr5DIdiqmCAmE0HGeWfJPHZDXvXOcFrJ2O6-I87mrTsvCkUls_QJnoeznpAjZ_XIDBIkqLGpxSD2GiVVc6V3SuzW6kW6Uvz8iCU" 
+                        src="/africhat-mark.svg" 
                       />
                     </div>
                     <span className="absolute bottom-1 right-1 bg-emerald-500 text-white rounded-full p-1">
@@ -3118,7 +3212,7 @@ export default function App() {
                     <img 
                       alt="Godfrey" 
                       className={`w-20 h-20 rounded-full object-cover border-4 ${isVoiceMuted ? 'border-red-500' : 'border-emerald-400'}`} 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYtwbxp_VB5JHh27eGaJWpRbY1k_3Ybsczc9VLlyD4nV7L8uGxtXpg8Dd-iS4-L3SEQKArd4bR_LmSyfHyM5O4yIkUKEiHHTgqtcHTiC16QudLo-oQ9A2v63uXFHcoIJJD2GTAbPeS0eFwZc6zTm4llLbdpbni4lHF5Pt3qTLp5YpCzOeBIzekXM-8RR4PBcJTyGtDJKE4V9-bsW-Be_z1Hk_wG4Nh_9PjiCte-ml1Tb5ykb9dJgYFF82WFn44e5yZ74xW3wfmdz0" 
+                      src="/africhat-mark.svg" 
                     />
                     <span className={`absolute bottom-1 right-1 rounded-full p-1 text-white ${isVoiceMuted ? 'bg-red-500' : 'bg-emerald-500'}`}>
                       <span className="material-symbols-outlined text-xs">
@@ -3144,7 +3238,7 @@ export default function App() {
                     <img 
                       alt="Zainab Aliyu" 
                       className="w-20 h-20 rounded-full object-cover border-4 border-white/12" 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVWx6g4iNSXz322s-exe0TqhkuWkeYj5aEF94I25LKekP9I6GTZ-YDVjVKi3w2akQEQxBGQ9mFYKMjiezSd6VxVA2nY6dQzk5yGDKP7XXr-HwPpneKHnsYEi97LnJ7Cbfm5yvxY5OY7pusN1FNRbxry-_lnJpAtXpLEVDbJXhyUFhvNPLQrHf8p0o9-W4flBntcW-cVWDgU8-PTbQvhkTsGUXz3-f5uyk-lhxzDl2M3EONHpQ8lP6_f_6hVwwdhwgNOJgnSrzZYi0" 
+                      src="/africhat-mark.svg" 
                     />
                     <span className="absolute bottom-1 right-1 bg-gray-500 text-white rounded-full p-1">
                       <span className="material-symbols-outlined text-xs">mic_off</span>
@@ -3229,7 +3323,7 @@ export default function App() {
                 }}
                 className={`w-18 h-18 rounded-full flex items-center justify-center transition-all shadow-lg ${
                   isVoiceMuted 
-                    ? 'bg-red-600/90 text-white scale-95 hover:bg-red-650' 
+                    ? 'bg-red-600/90 text-white scale-95 hover:bg-red-700' 
                     : 'bg-[#006a41] text-white hover:bg-[#0A8F5A]'
                 }`}
               >
@@ -3254,7 +3348,11 @@ export default function App() {
       </AnimatePresence>
 
       {/* FIXED PLATFORM BOTTOM NAVIGATION ANCHOR (5 TABS MATCHING IMAGES) */}
-      <nav className={`fixed bottom-0 left-0 w-full z-45 h-20 pb-safe flex justify-around items-center px-4 border-t shadow-lg backdrop-blur-lg ${theme === 'dark' ? 'bg-[#15221b]/95 border-white/10' : 'bg-white/95 border-t-gray-200'}`}>
+      <div className="fixed bottom-24 left-5 z-40">
+        <ThemeToggleButton className="h-12 w-12 shadow-xl backdrop-blur-xl" />
+      </div>
+
+      <nav className={`fixed bottom-0 left-0 w-full z-[45] h-20 pb-safe flex items-center justify-around px-4 border-t shadow-lg backdrop-blur-lg ${theme === 'dark' ? 'bg-[#15221b]/95 border-white/10' : 'bg-white/95 border-t-gray-200'}`}>
         
         {/* Navigation Tab: Home */}
         <button 
@@ -3283,20 +3381,26 @@ export default function App() {
           <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-[#15221b]"></div>
         </button>
 
-        {/* Navigation Tab: FAB Middle button with removed shadow and removed subtitle text matching the user request */}
+        {/* Navigation Tab: contextual center action */}
         <button 
           onClick={() => setShowCreateMenu(prev => !prev)}
-          className="flex flex-col items-center justify-center transition-all relative -top-3 z-50 cursor-pointer"
+          title={activeNavAction.title}
+          className="flex flex-col items-center justify-center transition-all relative -top-4 z-50 cursor-pointer"
         >
-          <div className={`w-14 h-14 rounded-full flex justify-center items-center transition-all duration-300 ${
-            showCreateMenu 
-              ? 'bg-[#F4B400] text-black scale-105 rotate-180' 
-              : 'bg-gradient-to-tr from-[#006a41] to-[#0A8F5A] text-white hover:scale-105 hover:rotate-90'
+          <div className={`flex h-16 w-16 items-center justify-center rounded-full border transition-all duration-300 ${
+            showCreateMenu
+              ? 'bg-[#F4B400] text-black rotate-180 border-yellow-200 shadow-[0_14px_30px_rgba(244,180,0,0.25)]'
+              : `bg-gradient-to-tr ${navActionTone[activeTab]} text-white border-white/10 shadow-[0_18px_36px_rgba(0,0,0,0.16)] hover:scale-105`
           }`}>
             <span className="material-symbols-outlined text-[28px] font-bold">
-              {showCreateMenu ? 'close' : 'add'}
+              {showCreateMenu ? 'close' : activeNavAction.icon}
             </span>
           </div>
+          <span className={`mt-1 text-[9px] font-black uppercase tracking-[0.32em] ${
+            showCreateMenu ? 'text-[#F4B400]' : 'text-on-surface-variant'
+          }`}>
+            {showCreateMenu ? 'Close' : activeNavAction.label}
+          </span>
         </button>
 
         {/* Navigation Tab: Discover / Super Wallets & Programs */}

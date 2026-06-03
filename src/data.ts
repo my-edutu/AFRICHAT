@@ -4,7 +4,7 @@ export const initialChats: Chat[] = [
   {
     id: "amina-k",
     name: "Best Friends",
-    avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAI2Qnz4SzZIkW7JXSeMlEaEK-ifFHZoHOTJm42H4BQ5RdrNXE2sZdDoRYG6ptV3lUXZLX8uUlD8p2595wt5wtyq7RgcsmMErtzPifjsf8XVKcsFAgEYHGrQDybp4LkKIU512EWR5t42NAXhf2Y-AuEPryVQq0npA7T4qKuUE8G3mQkGy8v4T5fypWbwC-lpdxVuOhdhXeK4AU4rshhb_E6B0FZPX3SF82U81wbAfRgfyjjP2ft2WVY0_bceE8eCw57SRouAO3C_QU",
+    avatar: "/africhat-mark.svg",
     isOnline: true,
     unreadCount: 0,
     lastMessageText: "See you at 6pm! 👋",
@@ -64,7 +64,7 @@ export const initialChats: Chat[] = [
   {
     id: "mom",
     name: "Mom",
-    avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAqVW8dGuLP6aTSIDp4lr2GqF7t21uhQfZRnTf12fl3CafNaL5L8ATZOvm-5V1v17bH9Jp6cOYhvHBfHMtSx9sfJOae1CFTT_HKhVSqMeZBPeIKHtrcommtSxv95PW8I3k4uH6pvN8rb4_2-Ekbv2B-1CzdcK-ZjTMvca9I5w1eilNR_UoEUu7KAXxXa5ZRj418Af7TiuRXVRnsEgezyq6S_L2aKeTJLjwj2B0HYi2BeJ7YH28NFpbDp3EiuIN8iohbOFPR-hNMZ2M",
+    avatar: "/africhat-mark.svg",
     isOnline: false,
     unreadCount: 0,
     lastMessageText: "Please call me when you are free.",
@@ -89,7 +89,7 @@ export const initialChats: Chat[] = [
   {
     id: "afri-ai",
     name: "AfriAI",
-    avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAmnIQ86LDdmfMPp1DY-aWdpxRamuijUDkLNbsU__T7TQqJPnofovaTr4VXz_d_4aM8kxjstNjYC9oyJvmedei6kV-WzNpe0cEt5seTYRbc1tEkSds0Mqh_27qEbJ3MJaShNu1I0Lr1Bg5JghL0hru6DdMBHvuucamoBfrNWo89tZ8dwZX2Enlf_SE6GmBiv3NMaSds1-9XSUApeSqclh3uersO3MFixY9mAEIQLTpBVs1TIgFB7zXsPoxgnJyF9HDqObpbIgEwxd4",
+    avatar: "/africhat-mark.svg",
     isOnline: true,
     unreadCount: 0,
     lastMessageText: "How can I accelerate your business builder today?",

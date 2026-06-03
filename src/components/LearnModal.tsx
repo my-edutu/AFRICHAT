@@ -114,7 +114,7 @@ export default function LearnModal({
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col ${theme === 'dark' ? 'bg-[#0E1B14] text-white' : 'bg-[#F8F9FA] text-neutral-900'} overflow-hidden`}>
+    <div className="fixed inset-0 z-50 flex flex-col bg-background text-on-surface overflow-hidden">
       {/* Header */}
       <header className="bg-[#006A42] text-white py-4 px-6 flex justify-between items-center z-10 shadow-md">
         <div className="flex items-center gap-3">
@@ -149,7 +149,7 @@ export default function LearnModal({
               <div 
                 key={course.id}
                 className={`rounded-3xl border overflow-hidden transition-all ${
-                  theme === 'dark' ? 'bg-black/20 border-white/5' : 'bg-white border-neutral-150 shadow-sm'
+                theme === 'dark' ? 'bg-black/20 border-white/5' : 'bg-white border-neutral-200 shadow-sm'
                 }`}
               >
                 <div className="h-40 relative select-none">
@@ -168,7 +168,7 @@ export default function LearnModal({
                   <p className="text-[11px] text-gray-500">{course.lessons} comprehensive video syllabus modules.</p>
                 </div>
 
-                <div className="px-5 pb-5 pt-3 border-t border-gray-150/10 flex items-center justify-between">
+                <div className="px-5 pb-5 pt-3 border-t border-gray-200/10 flex items-center justify-between">
                   {course.enrolled ? (
                     course.questions ? (
                       <button 

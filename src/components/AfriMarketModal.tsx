@@ -172,7 +172,7 @@ export default function AfriMarketModal({
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col ${theme === 'dark' ? 'bg-[#0E1B14] text-white' : 'bg-[#F8F9FA] text-neutral-900'} overflow-hidden`}>
+    <div className="fixed inset-0 z-50 flex flex-col bg-background text-on-surface overflow-hidden">
       {/* Header */}
       <header className="bg-[#006A42] text-white py-4 px-6 flex justify-between items-center z-10 shadow-md">
         <div className="flex items-center gap-3">
@@ -220,7 +220,7 @@ export default function AfriMarketModal({
                 alt=""
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent"></div>
-              <div className="absolute top-3 left-3 bg-red-650 text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
+              <div className="absolute top-3 left-3 bg-[#E53935] text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
                 LIVE
               </div>
@@ -244,7 +244,7 @@ export default function AfriMarketModal({
                 alt=""
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent"></div>
-              <div className="absolute top-3 left-3 bg-red-650 text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
+              <div className="absolute top-3 left-3 bg-[#E53935] text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
                 LIVE
               </div>
@@ -268,7 +268,7 @@ export default function AfriMarketModal({
                 alt=""
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/15 to-transparent"></div>
-              <div className="absolute top-3 left-3 bg-gray-650 text-white font-semibold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full">
+              <div className="absolute top-3 left-3 bg-gray-600 text-white font-semibold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full">
                 SCHEDULED (6PM)
               </div>
               <div className="absolute bottom-3 left-3 right-3">
@@ -484,7 +484,7 @@ export default function AfriMarketModal({
               {/* Central Selling Promo banner overlay */}
               <div className="absolute bottom-6 left-6 right-6 p-4 rounded-3xl bg-black/60 backdrop-blur-md border border-yellow-400/20 flex justify-between items-center max-w-xl mx-auto shadow-2xl animate-bounce-slow">
                 <div className="flex gap-3 items-center">
-                  <div className="w-12 h-12 rounded-xl bg-orange-650 flex items-center justify-center font-bold text-xs">👗</div>
+                  <div className="w-12 h-12 rounded-xl bg-[#F97316] flex items-center justify-center font-bold text-xs">👗</div>
                   <div>
                     <h5 className="font-extrabold text-xs text-yellow-400">Limited Royal Lagos Lace (4 yards)</h5>
                     <p className="text-[10px] text-gray-300">Reserve price: <span className="font-bold text-white">₦24,500</span></p>
@@ -582,7 +582,7 @@ export default function AfriMarketModal({
                 <div className="flex gap-3 pt-4">
                   <button 
                     onClick={() => setSelectedProductForPurchase(null)}
-                    className="flex-1 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-750 text-gray-600 dark:text-gray-300 py-3 rounded-xl text-xs font-bold transition-all"
+                    className="flex-1 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-gray-600 dark:text-gray-300 py-3 rounded-xl text-xs font-bold transition-all"
                   >
                     Cancel Order
                   </button>
