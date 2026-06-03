@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import LaunchFlow from "./components/LaunchFlow";
 import { 
   initialChats, 
   initialTransactions, 
@@ -31,7 +30,6 @@ export default function App() {
   const [isLearnOpen, setIsLearnOpen] = useState(false);
   // Theme state: default to system preference, persisted after the first choice.
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
-  const [isLaunched, setIsLaunched] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'home' | 'chats' | 'pay' | 'discover' | 'profile'>('home');
   
   // State for active chatbot conversation or normal chat
@@ -651,16 +649,6 @@ export default function App() {
       </span>
     </button>
   );
-
-  if (!isLaunched) {
-    return (
-      <LaunchFlow
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onLaunch={() => setIsLaunched(true)}
-      />
-    );
-  }
 
   return (
     <div className="app-shell min-h-screen bg-background text-on-surface antialiased pb-24 transition-colors duration-300">
