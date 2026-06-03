@@ -678,7 +678,7 @@ export default function App() {
             className="fixed inset-0 z-50 flex flex-col bg-background"
           >
             {/* Top Bar matching Screen 2 */}
-            <header className={`flex justify-between items-center px-4 h-16 w-full z-[45] border-b backdrop-blur-md sticky top-0 ${isDark ? 'bg-[rgba(15,29,21,0.95)] border-white/10' : 'bg-white/95 border-b-gray-200 shadow-sm'}`}>
+            <header className="flex justify-between items-center px-4 h-16 w-full z-[45] border-b border-surface bg-surface-strong backdrop-blur-md sticky top-0 shadow-sm">
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => { setSelectedChatId(null); setChatSummary(null); }}
@@ -742,7 +742,7 @@ export default function App() {
             </header>
 
             {/* Smart Conversation Summary Tooltip */}
-            <div className={`p-3 relative z-10 sticky top-16 shadow-lg flex flex-col items-center gap-2 border-b ${isDark ? 'bg-[#15221b] border-white/5' : 'bg-[#edeeef] border-gray-200'}`}>
+            <div className="p-3 relative z-10 sticky top-16 shadow-lg flex flex-col items-center gap-2 border-b border-surface bg-surface backdrop-blur-md">
               <div className="flex items-center gap-3 w-full justify-between max-w-4xl">
                 <p className="text-xs text-on-surface-variant font-medium">✨ Need a structured summary of this chat?</p>
                 <button 
@@ -1533,10 +1533,10 @@ export default function App() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              className="flex flex-col min-h-screen bg-[#f8f9fa] dark:bg-[#09110d] pb-24 text-on-surface"
+              className="flex flex-col min-h-screen bg-background text-on-surface pb-24"
             >
               {/* Custom TopAppBar for Chats */}
-              <header className="flex justify-between items-center px-4 h-16 w-full z-40 bg-white/95 dark:bg-[#0e1b14]/95 backdrop-blur-md sticky top-0 border-b border-gray-100 dark:border-white/5 shadow-sm">
+              <header className="flex justify-between items-center px-4 h-16 w-full z-40 bg-surface-strong backdrop-blur-md sticky top-0 border-b border-surface shadow-sm">
                 <div className="flex items-center gap-3">
                   <div 
                     onClick={() => setActiveTab('profile')}
@@ -1566,7 +1566,7 @@ export default function App() {
               </header>
 
               {/* Filter Bar / Tabs */}
-              <div className="sticky top-16 z-30 bg-white/90 dark:bg-[#0e1b14]/90 backdrop-blur-md border-b border-gray-100 dark:border-white/5">
+              <div className="sticky top-16 z-30 bg-surface backdrop-blur-md border-b border-surface">
                 <div className="flex items-center justify-between px-4 overflow-x-auto no-scrollbar">
                   <div className="flex gap-6 h-12 items-center whitespace-nowrap">
                     <button 
@@ -2719,7 +2719,7 @@ export default function App() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              className="flex flex-col min-h-screen bg-[#f8f9fa] dark:bg-[#09110d] pb-24 text-on-surface"
+              className="flex flex-col min-h-screen bg-background text-on-surface pb-24"
             >
               {/* Top AppBar Component */}
               <header className="bg-[#006a41] sticky top-0 z-40 flex justify-between items-center w-full px-4 h-16 rounded-b-none shadow-md">
@@ -2975,126 +2975,125 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* CONTEXTUAL QUICK ACTION SHEET */}
+      {/* DYNAMIC ACTION SHEET / MENU FOR LARGE CREATOR "+" BUTTON */}
       <AnimatePresence>
         {showCreateMenu && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className="fixed inset-0 z-50">
             <motion.div
               onClick={() => setShowCreateMenu(false)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/55 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
 
             <motion.div
-              initial={{ y: "100%", opacity: 0.95, scale: 0.98 }}
-              animate={{ y: 0, opacity: 1, scale: 1, height: isCreatorExpanded ? "92vh" : "76vh" }}
-              exit={{ y: "100%", opacity: 0.95, scale: 0.98 }}
-              transition={{ type: "spring", damping: 28, stiffness: 260, mass: 0.9 }}
-              className={`relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-t-[34px] border-t shadow-[0_-30px_80px_rgba(0,0,0,0.25)] ${
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 220 }}
+              className={`absolute bottom-0 left-0 right-0 rounded-t-[32px] p-6 text-on-surface border-t shadow-2xl ${
                 theme === "dark"
-                  ? "bg-[#101a15] border-white/10 text-white"
-                  : "bg-white border-neutral-200 text-neutral-950"
+                  ? "bg-[#15221b] border-white/10 text-white"
+                  : "bg-white border-gray-200"
               }`}
             >
-              <div className={`shrink-0 px-5 pt-3 pb-5 ${theme === "dark" ? "bg-[#0d160f]" : "bg-[#f8fbf9]"}`}>
+              <div className="w-12 h-1.5 bg-neutral-700 rounded-full mx-auto mb-6"></div>
+
+              <div className="text-center mb-5">
+                <h3 className="font-extrabold text-sm uppercase tracking-wider text-[#0A8F5A] dark:text-yellow-400">
+                  AfriChat Creator Deck
+                </h3>
+                <p className="mt-2 text-xs text-on-surface-variant">
+                  Pick a feature to preview for the demo.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <button
-                  onClick={() => setIsCreatorExpanded((prev) => !prev)}
-                  className="mx-auto flex flex-col items-center gap-2 rounded-full px-4 py-2 transition-colors hover:bg-black/5 active:bg-black/10"
-                  title={isCreatorExpanded ? "Swipe down to collapse" : "Swipe up to expand"}
+                  onClick={() => {
+                    setShowCreateMenu(false);
+                    setActiveTab("discover");
+                    triggerToast("Opened the mini app builder area.");
+                  }}
+                  className={`p-4 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center border transition-all active:scale-[0.98] ${
+                    theme === "dark"
+                      ? "bg-white/5 hover:bg-white/10 border-white/5"
+                      : "bg-surface hover:bg-surface-strong border-surface"
+                  }`}
                 >
-                  <div className="h-1.5 w-14 rounded-full bg-black/20 dark:bg-white/25" />
-                  <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.32em] text-on-surface-variant">
-                    <span className="material-symbols-outlined text-[13px]">
-                      {isCreatorExpanded ? "keyboard_double_arrow_down" : "keyboard_double_arrow_up"}
-                    </span>
-                    {isCreatorExpanded ? "Swipe down to collapse" : "Swipe up to expand"}
+                  <span className="material-symbols-outlined text-[#6ddb9f] text-2xl">auto_awesome</span>
+                  <div>
+                    <p className="text-xs font-bold">Launch Custom App</p>
+                    <p className="text-[10px] text-on-surface-variant">Compile brand templates with AI</p>
                   </div>
                 </button>
 
-                <div className="mt-4 flex items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-[0.32em] text-brand">
-                      {activeLaunchPad.eyebrow}
-                    </p>
-                    <h2 className="font-display text-2xl font-black tracking-tight sm:text-[2rem]">
-                      {activeLaunchPad.title}
-                    </h2>
-                    <p className="max-w-md text-sm leading-6 text-on-surface-variant">
-                      {activeLaunchPad.description}
-                    </p>
-                  </div>
-                  <div
-                    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${navActionSwatch[activeTab]} shadow-lg`}
-                  >
-                    <span className="material-symbols-outlined text-[28px]">
-                      {activeNavAction.icon}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                onScroll={(e) => {
-                  const target = e.currentTarget;
-                  if (target.scrollTop > 12 && !isCreatorExpanded) {
-                    setIsCreatorExpanded(true);
-                  }
-                }}
-                className="flex-1 overflow-y-auto custom-scrollbar px-5 py-5"
-              >
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {activeLaunchPad.actions.map((action, index) => (
-                    <button
-                      key={action.id}
-                      onClick={() => handleLaunchPadAction(action.id)}
-                      className={`group rounded-[24px] border p-4 text-left transition-all active:scale-[0.99] ${
-                        theme === "dark"
-                          ? "border-white/8 bg-white/[0.03] hover:bg-white/[0.06]"
-                          : "border-neutral-200 bg-white hover:bg-neutral-50 hover:shadow-md"
-                      }`}
-                    >
-                      <div
-                        className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${
-                          index === 0
-                            ? "bg-[rgba(0,106,66,0.12)] text-[#006A42]"
-                            : index === 1
-                              ? "bg-[rgba(244,180,0,0.16)] text-[#A56B00]"
-                              : index === 2
-                                ? "bg-[rgba(36,59,255,0.12)] text-[#243BFF]"
-                                : "bg-[rgba(10,143,90,0.12)] text-[#0A8F5A]"
-                        }`}
-                      >
-                        <span className="material-symbols-outlined text-[24px]">{action.icon}</span>
-                      </div>
-                      <p className="text-sm font-bold">{action.title}</p>
-                      <p className="mt-1 text-[11px] leading-5 text-on-surface-variant">{action.copy}</p>
-                    </button>
-                  ))}
-                </div>
-
-                <div
-                  className={`mt-4 rounded-[28px] border p-4 ${
+                <button
+                  onClick={() => {
+                    setShowCreateMenu(false);
+                    triggerToast("Broadcast channel initiated: create campaign draft.");
+                  }}
+                  className={`p-4 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center border transition-all active:scale-[0.98] ${
                     theme === "dark"
-                      ? "border-white/8 bg-white/[0.03]"
-                      : "border-neutral-200 bg-surface"
+                      ? "bg-white/5 hover:bg-white/10 border-white/5"
+                      : "bg-surface hover:bg-surface-strong border-surface"
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.26em] text-brand">
-                        Presentation mode
-                      </p>
-                      <h3 className="mt-1 text-base font-black">No backend connected</h3>
-                    </div>
-                    <span className="material-symbols-outlined text-[26px] text-brand">slideshow</span>
+                  <span className="material-symbols-outlined text-yellow-400 text-2xl">rss_feed</span>
+                  <div>
+                    <p className="text-xs font-bold">New Broadcast</p>
+                    <p className="text-[10px] text-on-surface-variant">Announce items to your audience</p>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-on-surface-variant">
-                    This launcher is a visual preview only. The actions are mock surfaces for the presentation.
-                  </p>
-                </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowCreateMenu(false);
+                    triggerToast("Village co-op contribution pool registered.");
+                  }}
+                  className={`p-4 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center border transition-all active:scale-[0.98] ${
+                    theme === "dark"
+                      ? "bg-white/5 hover:bg-white/10 border-white/5"
+                      : "bg-surface hover:bg-surface-strong border-surface"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-blue-400 text-2xl">diversity_3</span>
+                  <div>
+                    <p className="text-xs font-bold">Register Collective</p>
+                    <p className="text-[10px] text-on-surface-variant">Savings cooperative setup</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowCreateMenu(false);
+                    setIsLearnOpen(true);
+                  }}
+                  className={`p-4 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center border transition-all active:scale-[0.98] ${
+                    theme === "dark"
+                      ? "bg-white/5 hover:bg-white/10 border-white/5"
+                      : "bg-surface hover:bg-surface-strong border-surface"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-pink-400 text-2xl">school</span>
+                  <div>
+                    <p className="text-xs font-bold">New AfriLearn Course</p>
+                    <p className="text-[10px] text-on-surface-variant">Upload skill videos and quizzes</p>
+                  </div>
+                </button>
               </div>
+
+              <button
+                onClick={() => setShowCreateMenu(false)}
+                className={`w-full mt-6 py-3 rounded-xl border text-xs font-bold transition-all active:scale-[0.98] ${
+                  theme === "dark"
+                    ? "bg-white/5 border-white/5 text-gray-200 hover:bg-white/10"
+                    : "bg-neutral-100 border-neutral-200 text-neutral-700 hover:bg-neutral-200"
+                }`}
+              >
+                Close Creator Panel
+              </button>
             </motion.div>
           </div>
         )}
@@ -3335,12 +3334,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* FIXED PLATFORM BOTTOM NAVIGATION ANCHOR (5 TABS MATCHING IMAGES) */}
-      <div className="fixed bottom-24 left-5 z-40">
-        <ThemeToggleButton className="h-12 w-12 shadow-xl backdrop-blur-xl" />
-      </div>
-
-      <nav className={`fixed bottom-0 left-0 w-full z-[45] h-20 pb-safe flex items-center justify-around px-4 border-t shadow-lg backdrop-blur-lg ${theme === 'dark' ? 'bg-[#15221b]/95 border-white/10' : 'bg-white/95 border-t-gray-200'}`}>
+      <nav className="fixed bottom-0 left-0 w-full z-[45] h-20 pb-safe flex items-center justify-around px-4 border-t border-surface bg-surface-strong shadow-lg backdrop-blur-lg">
         
         {/* Navigation Tab: Home */}
         <button 
@@ -3369,25 +3363,25 @@ export default function App() {
           <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-[#15221b]"></div>
         </button>
 
-        {/* Navigation Tab: contextual center action */}
+        {/* Navigation Tab: FAB Middle button */}
         <button 
           onClick={() => setShowCreateMenu(prev => !prev)}
-          title={activeNavAction.title}
+          title="More features"
           className="flex flex-col items-center justify-center transition-all relative -top-4 z-50 cursor-pointer"
         >
-          <div className={`flex h-16 w-16 items-center justify-center rounded-full border transition-all duration-300 ${
+          <div className={`flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-300 ${
             showCreateMenu
-              ? 'bg-[#F4B400] text-black rotate-180 border-yellow-200 shadow-[0_14px_30px_rgba(244,180,0,0.25)]'
-              : `bg-gradient-to-tr ${navActionTone[activeTab]} text-white border-white/10 shadow-[0_18px_36px_rgba(0,0,0,0.16)] hover:scale-105`
+              ? 'bg-[#F4B400] text-black rotate-180 shadow-[0_14px_30px_rgba(244,180,0,0.25)]'
+              : 'bg-gradient-to-tr from-[#006a41] to-[#0A8F5A] text-white hover:scale-105 hover:rotate-90 shadow-[0_18px_36px_rgba(0,0,0,0.16)]'
           }`}>
             <span className="material-symbols-outlined text-[28px] font-bold">
-              {showCreateMenu ? 'close' : activeNavAction.icon}
+              {showCreateMenu ? 'close' : 'add'}
             </span>
           </div>
           <span className={`mt-1 text-[9px] font-black uppercase tracking-[0.32em] ${
             showCreateMenu ? 'text-[#F4B400]' : 'text-on-surface-variant'
           }`}>
-            {showCreateMenu ? 'Close' : activeNavAction.label}
+            {showCreateMenu ? 'Close' : 'More'}
           </span>
         </button>
 
