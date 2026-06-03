@@ -112,13 +112,16 @@ export default function App() {
 
   // Bottom action sheet for FAB
   const [showCreateMenu, setShowCreateMenu] = useState<boolean>(false);
-  const [isCreatorExpanded, setIsCreatorExpanded] = useState<boolean>(false);
-
-  // Reset expansion state when Creator modal closes
   useEffect(() => {
-    if (!showCreateMenu) {
-      setIsCreatorExpanded(false);
-    }
+    if (!showCreateMenu) return;
+
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    body.style.overflow = "hidden";
+
+    return () => {
+      body.style.overflow = previousOverflow;
+    };
   }, [showCreateMenu]);
 
   // Toast / Status Indicators
@@ -231,6 +234,70 @@ export default function App() {
     discover: "bg-[rgba(10,143,90,0.12)] text-[#0A8F5A]",
     profile: "bg-[rgba(91,91,91,0.12)] text-[#5B5B5B]",
   } as const;
+  const createPostActions = [
+    {
+      id: "text",
+      title: "Text",
+      description: "Share your thoughts",
+      icon: "notes",
+      iconClass: "bg-brand-soft text-brand-strong",
+    },
+    {
+      id: "image",
+      title: "Image",
+      description: "Photos & memories",
+      icon: "image",
+      iconClass: "bg-[rgba(244,180,0,0.14)] text-brand-accent",
+    },
+    {
+      id: "video",
+      title: "Video",
+      description: "Short clips & stories",
+      icon: "movie",
+      iconClass: "bg-[rgba(251,113,133,0.14)] text-rose-500 dark:text-rose-300",
+    },
+    {
+      id: "voice",
+      title: "Voice",
+      description: "Audio notes",
+      icon: "mic",
+      iconClass: "bg-[rgba(10,143,90,0.12)] text-brand-strong",
+    },
+  ] as const;
+  const createBuildActions = [
+    {
+      id: "business",
+      title: "Create Business",
+      description: "Launch your own digital business.",
+      icon: "business_center",
+      iconClass: "bg-[rgba(244,180,0,0.14)] text-brand-accent",
+      badge: undefined,
+    },
+    {
+      id: "miniapp",
+      title: "Create Mini App",
+      description: "Build a powerful app with AI assistance.",
+      icon: "widgets",
+      iconClass: "bg-brand-soft text-brand-strong",
+      badge: "AI Power",
+    },
+    {
+      id: "community",
+      title: "Create Community",
+      description: "Start a new social community or group.",
+      icon: "groups",
+      iconClass: "bg-[rgba(10,143,90,0.12)] text-brand-strong",
+      badge: undefined,
+    },
+    {
+      id: "agent",
+      title: "Create AI Agent",
+      description: "Launch your personal or business AI assistant.",
+      icon: "smart_toy",
+      iconClass: "bg-[rgba(251,113,133,0.14)] text-rose-500 dark:text-rose-300",
+      badge: undefined,
+    },
+  ] as const;
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
@@ -2978,124 +3045,165 @@ export default function App() {
       {/* DYNAMIC ACTION SHEET / MENU FOR LARGE CREATOR "+" BUTTON */}
       <AnimatePresence>
         {showCreateMenu && (
-          <div className="fixed inset-0 z-50">
-            <motion.div
+          <motion.div
+            key="create-hub"
+            className="fixed inset-0 z-50 overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
               onClick={() => setShowCreateMenu(false)}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className={`absolute inset-0 ${isDark ? "bg-[rgba(5,12,8,0.84)]" : "bg-[rgba(14,23,18,0.40)]"} backdrop-blur-xl`}
             />
 
             <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className={`absolute bottom-0 left-0 right-0 rounded-t-[32px] p-6 text-on-surface border-t shadow-2xl ${
-                theme === "dark"
-                  ? "bg-[#15221b] border-white/10 text-white"
-                  : "bg-white border-gray-200"
-              }`}
+              initial={{ y: 28, scale: 0.99, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              exit={{ y: 20, scale: 0.99, opacity: 0 }}
+              transition={{ type: "spring", damping: 28, stiffness: 240 }}
+              className="relative z-10 flex h-full flex-col overflow-hidden bg-background text-on-surface"
             >
-              <div className="w-12 h-1.5 bg-neutral-700 rounded-full mx-auto mb-6"></div>
+              <header className="shrink-0 border-b border-white/10 bg-brand-strong text-white shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
+                <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 md:px-6">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => triggerToast("Profile preview is not wired yet.")}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10"
+                      aria-label="Profile preview"
+                    >
+                      <img
+                        alt="AfriChat profile mark"
+                        className="h-full w-full object-contain p-1.5"
+                        src="/africhat-mark.svg"
+                      />
+                    </button>
 
-              <div className="text-center mb-5">
-                <h3 className="font-extrabold text-sm uppercase tracking-wider text-[#0A8F5A] dark:text-yellow-400">
-                  AfriChat Creator Deck
-                </h3>
-                <p className="mt-2 text-xs text-on-surface-variant">
-                  Pick a feature to preview for the demo.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  onClick={() => {
-                    setShowCreateMenu(false);
-                    setActiveTab("discover");
-                    triggerToast("Opened the mini app builder area.");
-                  }}
-                  className={`p-4 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center border transition-all active:scale-[0.98] ${
-                    theme === "dark"
-                      ? "bg-white/5 hover:bg-white/10 border-white/5"
-                      : "bg-surface hover:bg-surface-strong border-surface"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[#6ddb9f] text-2xl">auto_awesome</span>
-                  <div>
-                    <p className="text-xs font-bold">Launch Custom App</p>
-                    <p className="text-[10px] text-on-surface-variant">Compile brand templates with AI</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/70">
+                        AfriChat
+                      </p>
+                      <h2 className="text-[22px] font-extrabold tracking-tight sm:text-[24px]">
+                        Create
+                      </h2>
+                    </div>
                   </div>
-                </button>
 
-                <button
-                  onClick={() => {
-                    setShowCreateMenu(false);
-                    triggerToast("Broadcast channel initiated: create campaign draft.");
-                  }}
-                  className={`p-4 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center border transition-all active:scale-[0.98] ${
-                    theme === "dark"
-                      ? "bg-white/5 hover:bg-white/10 border-white/5"
-                      : "bg-surface hover:bg-surface-strong border-surface"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-yellow-400 text-2xl">rss_feed</span>
-                  <div>
-                    <p className="text-xs font-bold">New Broadcast</p>
-                    <p className="text-[10px] text-on-surface-variant">Announce items to your audience</p>
-                  </div>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateMenu(false)}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                    aria-label="Close create hub"
+                  >
+                    <span className="material-symbols-outlined text-[24px]">close</span>
+                  </button>
+                </div>
+              </header>
 
-                <button
-                  onClick={() => {
-                    setShowCreateMenu(false);
-                    triggerToast("Village co-op contribution pool registered.");
-                  }}
-                  className={`p-4 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center border transition-all active:scale-[0.98] ${
-                    theme === "dark"
-                      ? "bg-white/5 hover:bg-white/10 border-white/5"
-                      : "bg-surface hover:bg-surface-strong border-surface"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-blue-400 text-2xl">diversity_3</span>
-                  <div>
-                    <p className="text-xs font-bold">Register Collective</p>
-                    <p className="text-[10px] text-on-surface-variant">Savings cooperative setup</p>
-                  </div>
-                </button>
+              <main className="relative flex-1 overflow-y-auto px-4 py-6 md:px-6">
+                <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                  <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-soft blur-3xl opacity-80" />
+                  <div className="absolute -left-28 bottom-0 h-80 w-80 rounded-full bg-[rgba(244,180,0,0.10)] blur-3xl opacity-70" />
+                </div>
 
-                <button
-                  onClick={() => {
-                    setShowCreateMenu(false);
-                    setIsLearnOpen(true);
-                  }}
-                  className={`p-4 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center border transition-all active:scale-[0.98] ${
-                    theme === "dark"
-                      ? "bg-white/5 hover:bg-white/10 border-white/5"
-                      : "bg-surface hover:bg-surface-strong border-surface"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-pink-400 text-2xl">school</span>
-                  <div>
-                    <p className="text-xs font-bold">New AfriLearn Course</p>
-                    <p className="text-[10px] text-on-surface-variant">Upload skill videos and quizzes</p>
-                  </div>
-                </button>
-              </div>
+                <div className="relative mx-auto flex max-w-5xl flex-col gap-8">
+                  <section className="pt-2">
+                    <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-on-surface md:text-5xl">
+                      What&apos;s on your mind?
+                    </h1>
+                    <p className="mt-3 max-w-2xl text-base leading-7 text-on-surface-variant md:text-lg">
+                      Choose a way to express yourself or build something new.
+                    </p>
+                  </section>
 
-              <button
-                onClick={() => setShowCreateMenu(false)}
-                className={`w-full mt-6 py-3 rounded-xl border text-xs font-bold transition-all active:scale-[0.98] ${
-                  theme === "dark"
-                    ? "bg-white/5 border-white/5 text-gray-200 hover:bg-white/10"
-                    : "bg-neutral-100 border-neutral-200 text-neutral-700 hover:bg-neutral-200"
-                }`}
-              >
-                Close Creator Panel
-              </button>
+                  <section className="space-y-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.32em] text-brand-strong">
+                        Create Post
+                      </h3>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-on-surface-variant">
+                        Quick picks
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {createPostActions.map((action) => (
+                        <button
+                          key={action.id}
+                          type="button"
+                          onClick={() => triggerToast(`${action.title} is a presentation preview.`)}
+                          className="group flex min-h-[152px] flex-col items-start justify-between rounded-[28px] border border-surface bg-surface-strong p-5 text-left shadow-[0_18px_40px_rgba(13,32,23,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(13,32,23,0.12)] active:scale-[0.98]"
+                        >
+                          <span className={`flex h-12 w-12 items-center justify-center rounded-full ${action.iconClass}`}>
+                            <span className="material-symbols-outlined text-[26px]">
+                              {action.icon}
+                            </span>
+                          </span>
+
+                          <div className="space-y-1">
+                            <h4 className="text-base font-semibold text-on-surface">
+                              {action.title}
+                            </h4>
+                            <p className="text-sm leading-6 text-on-surface-variant">
+                              {action.description}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="space-y-4 pb-2">
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.32em] text-brand-strong">
+                      Launch &amp; Build
+                    </h3>
+
+                    <div className="flex flex-col gap-4">
+                      {createBuildActions.map((action) => (
+                        <button
+                          key={action.id}
+                          type="button"
+                          onClick={() => triggerToast(`${action.title} is a presentation preview.`)}
+                          className="group relative overflow-hidden rounded-[28px] border border-surface bg-surface-strong p-5 text-left shadow-[0_18px_40px_rgba(13,32,23,0.08)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(13,32,23,0.12)] active:scale-[0.99]"
+                        >
+                          <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-brand-soft opacity-60 transition-transform duration-500 group-hover:scale-110" />
+
+                          <div className="relative flex items-center gap-4">
+                            <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] ${action.iconClass}`}>
+                              <span className="material-symbols-outlined text-[26px]">
+                                {action.icon}
+                              </span>
+                            </span>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h4 className="text-base font-semibold text-on-surface">
+                                  {action.title}
+                                </h4>
+                                {action.badge && (
+                                  <span className="rounded-full bg-[rgba(244,180,0,0.16)] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] text-brand-accent">
+                                    {action.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mt-1 text-sm leading-6 text-on-surface-variant">
+                                {action.description}
+                              </p>
+                            </div>
+
+                            <span className="material-symbols-outlined text-on-surface-variant transition-transform duration-300 group-hover:translate-x-1">
+                              chevron_right
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              </main>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -3366,22 +3474,22 @@ export default function App() {
         {/* Navigation Tab: FAB Middle button */}
         <button 
           onClick={() => setShowCreateMenu(prev => !prev)}
-          title="More features"
+          title="Create hub"
           className="flex flex-col items-center justify-center transition-all relative -top-4 z-50 cursor-pointer"
         >
           <div className={`flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-300 ${
             showCreateMenu
-              ? 'bg-[#F4B400] text-black rotate-180 shadow-[0_14px_30px_rgba(244,180,0,0.25)]'
-              : 'bg-gradient-to-tr from-[#006a41] to-[#0A8F5A] text-white hover:scale-105 hover:rotate-90 shadow-[0_18px_36px_rgba(0,0,0,0.16)]'
+              ? 'bg-secondary-container text-on-secondary-container rotate-180 shadow-[0_14px_30px_rgba(244,180,0,0.25)]'
+              : 'bg-brand-strong text-white hover:scale-105 hover:rotate-90 shadow-[0_18px_36px_rgba(0,0,0,0.16)]'
           }`}>
             <span className="material-symbols-outlined text-[28px] font-bold">
               {showCreateMenu ? 'close' : 'add'}
             </span>
           </div>
           <span className={`mt-1 text-[9px] font-black uppercase tracking-[0.32em] ${
-            showCreateMenu ? 'text-[#F4B400]' : 'text-on-surface-variant'
+            showCreateMenu ? 'text-brand-accent' : 'text-on-surface-variant'
           }`}>
-            {showCreateMenu ? 'Close' : 'More'}
+            Create
           </span>
         </button>
 
