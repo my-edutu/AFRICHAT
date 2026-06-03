@@ -43,6 +43,18 @@ export default function App() {
   // Search filter
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  // Homepage UX states
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [isSmartSuggestionVisible, setIsSmartSuggestionVisible] = useState(true);
+
+  // Auto-hide AfriAI Smart Suggestion after 8 seconds (a few seconds) on mount of the app
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsSmartSuggestionVisible(false);
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // AI mini program builder state
   const [customMiniApps, setCustomMiniApps] = useState<MiniApp[]>([
     {
@@ -91,6 +103,14 @@ export default function App() {
 
   // Bottom action sheet for FAB
   const [showCreateMenu, setShowCreateMenu] = useState<boolean>(false);
+  const [isCreatorExpanded, setIsCreatorExpanded] = useState<boolean>(false);
+
+  // Reset expansion state when Creator modal closes
+  useEffect(() => {
+    if (!showCreateMenu) {
+      setIsCreatorExpanded(false);
+    }
+  }, [showCreateMenu]);
 
   // Toast / Status Indicators
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -747,19 +767,6 @@ export default function App() {
 
           {/* Global Controls */}
           <div className="flex items-center gap-4 text-white">
-            <button 
-              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} 
-              className="p-1.5 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-center gap-1.5 bg-white/5 border border-white/15 cursor-pointer"
-              title="Toggle Light/Dark Design System"
-            >
-              <span className="material-symbols-outlined text-emerald-300 text-sm">
-                {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-              </span>
-              <span className="text-[10px] font-bold tracking-tight pr-1 uppercase">
-                {theme === 'dark' ? 'Light' : 'Dark'}
-              </span>
-            </button>
-            
             <button onClick={() => triggerToast("Notification registry: Your Abuja Rides micro-program is deployed.")} className="hover:bg-[#0A8F5A] p-2 rounded-full transition-all">
               <span className="material-symbols-outlined">notifications</span>
             </button>
@@ -800,8 +807,9 @@ export default function App() {
                   {/* Right Header icons: Search & Notifications */}
                   <div className="flex items-center gap-4">
                     <span 
-                      onClick={() => triggerToast("Global registry filter active.")} 
-                      className="material-symbols-outlined text-white text-[22px] cursor-pointer hover:opacity-80 active:scale-90 transition-all font-semibold"
+                      onClick={() => setIsSearchVisible(prev => !prev)} 
+                      className={`material-symbols-outlined text-[22px] cursor-pointer hover:opacity-80 active:scale-95 transition-all font-semibold ${isSearchVisible ? 'text-yellow-300' : 'text-white'}`}
+                      title="Toggle Search Bar"
                     >
                       search
                     </span>
@@ -814,24 +822,37 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Styled Search Input Area */}
-                <div className="relative mt-2">
-                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/70 text-lg">search</span>
-                  <input 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    type="text" 
-                    className="w-full bg-[#055734] hover:bg-[#044a2c] focus:bg-[#033f25] border-none rounded-2xl py-3.5 pl-12 pr-11 text-white placeholder-white/55 text-[13px] tracking-normal focus:ring-1 focus:ring-white/20 transition-all outline-none"
-                    placeholder="Search anything..."
-                  />
-                  {searchQuery ? (
-                    <button onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-all">
-                      <span className="material-symbols-outlined text-[16px]">close</span>
-                    </button>
-                  ) : (
-                    <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-white/50 text-[18px] select-none pointer-events-none">close</span>
+                {/* Styled Search Input Area with fold/hide animations */}
+                <AnimatePresence>
+                  {isSearchVisible && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                      animate={{ opacity: 1, height: "auto", marginTop: 8 }}
+                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      className="relative overflow-hidden"
+                    >
+                      <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/70 text-lg">search</span>
+                      <input 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        type="text" 
+                        autoFocus
+                        className="w-full bg-[#055734] hover:bg-[#044a2c] focus:bg-[#033f25] border-none rounded-2xl py-3.5 pl-12 pr-11 text-white placeholder-white/55 text-[13px] tracking-normal focus:ring-1 focus:ring-white/20 transition-all outline-none animate-none"
+                        placeholder="Search anything..."
+                      />
+                      {searchQuery ? (
+                        <button onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-all">
+                          <span className="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                      ) : (
+                        <button onClick={() => setIsSearchVisible(false)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-all">
+                          <span className="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                      )}
+                    </motion.div>
                   )}
-                </div>
+                </AnimatePresence>
                 <div className="grid grid-cols-4 gap-x-2 gap-y-4 pt-3 text-center">
                   
                   {/* 1: Chats */}
@@ -961,26 +982,46 @@ export default function App() {
                   </div>
                 </section>
 
-                {/* AI Recommendation Feed matching PRD */}
-                <section className="bg-gradient-to-r from-emerald-900/5 to-yellow-500/5 rounded-3xl p-5 border border-emerald-500/10 space-y-3">
-                  <div className="flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300 font-extrabold uppercase tracking-wide">
-                    <span className="material-symbols-outlined text-sm text-[16px] text-[#F4B400]">auto_awesome</span>
-                    AfriAI Smart Suggestion
-                  </div>
-                  <div className="space-y-1.5">
-                    <h4 className="font-bold text-[13.5px] text-neutral-900 dark:text-white leading-tight">Create a School Portal Mini App</h4>
-                    <p className="text-xs text-neutral-500 leading-relaxed">Based on your transactions inside Abuja, we recommend compiling a customized SchoolPortal template with direct USSD bill clearance.</p>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      setIsAppWizardOpen(true);
-                      triggerToast("Prepared School Portal setup wizard parameters with AfriAI guidance.");
-                    }}
-                    className="w-full bg-[#006A42] hover:bg-[#005434] text-white py-3 rounded-2xl font-bold text-xs tracking-wide transition-all active:scale-95 cursor-pointer"
-                  >
-                    ⚡ Let AI Compile Design Specs
-                  </button>
-                </section>
+                {/* AI Recommendation Feed matching PRD with auto-disappear timer */}
+                <AnimatePresence>
+                  {isSmartSuggestionVisible && (
+                    <motion.section 
+                      initial={{ opacity: 1, height: "auto", scale: 1 }}
+                      animate={{ opacity: 1, height: "auto", scale: 1 }}
+                      exit={{ opacity: 0, height: 0, scale: 0.95, overflow: 'hidden', padding: 0, marginTop: 0, marginBottom: 0, border: 0 }}
+                      transition={{ duration: 0.4, ease: "easeInOut" }}
+                      className="bg-gradient-to-r from-emerald-900/5 to-yellow-500/5 rounded-3xl p-5 border border-emerald-500/10 space-y-3 relative"
+                    >
+                      <button 
+                        onClick={() => {
+                          setIsSmartSuggestionVisible(false);
+                          triggerToast("Dismissed Smart Suggestion.");
+                        }}
+                        className="absolute right-4 top-4 text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-white transition-colors"
+                        title="Dismiss"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">close</span>
+                      </button>
+                      <div className="flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300 font-extrabold uppercase tracking-wide">
+                        <span className="material-symbols-outlined text-sm text-[16px] text-[#F4B400]">auto_awesome</span>
+                        AfriAI Smart Suggestion
+                      </div>
+                      <div className="space-y-1.5 pr-4">
+                        <h4 className="font-bold text-[13.5px] text-neutral-900 dark:text-white leading-tight">Create a School Portal Mini App</h4>
+                        <p className="text-xs text-neutral-500 leading-relaxed">Based on your transactions inside Abuja, we recommend compiling a customized SchoolPortal template with direct USSD bill clearance.</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          setIsAppWizardOpen(true);
+                          triggerToast("Prepared School Portal setup wizard parameters with AfriAI guidance.");
+                        }}
+                        className="w-full bg-[#006A42] hover:bg-[#005434] text-white py-3 rounded-2xl font-bold text-xs tracking-wide transition-all active:scale-95 cursor-pointer"
+                      >
+                        ⚡ Let AI Compile Design Specs
+                      </button>
+                    </motion.section>
+                  )}
+                </AnimatePresence>
 
                 {/* Recommended Mini Apps Shelf */}
                 <section className="space-y-4">
@@ -1282,17 +1323,6 @@ export default function App() {
                     <span className="material-symbols-outlined text-emerald-600 dark:text-[#6ddb9f] text-[18px]">account_balance_wallet</span>
                     <span className="text-[11px] font-bold text-[#006a41] dark:text-[#6ddb9f]">$1,250.00</span>
                   </div>
-                  <button 
-                    onClick={() => {
-                      setTheme(theme === 'light' ? 'dark' : 'light');
-                      triggerToast(`Switched to ${theme === 'light' ? 'Dark' : 'Light'} theme.`);
-                    }} 
-                    className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-gray-500 hover:text-emerald-600">
-                      {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-                    </span>
-                  </button>
                   <button 
                     onClick={() => triggerToast("System settings: Verified AfriPay channels active.")} 
                     className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
@@ -1602,15 +1632,19 @@ export default function App() {
               exit={{ opacity: 0, y: -15 }}
               className="space-y-6"
             >
-              {/* Wallet Hero Card Panel matches image 3 precisely */}
-              <section className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-[#09160f] to-[#15221b] border border-white/10 shadow-2xl">
+              {/* Wallet Hero Card Panel matches image 3 precisely but optimized for light mode branding */}
+              <section className={`relative overflow-hidden rounded-3xl p-6 border shadow-2xl transition-all ${
+                theme === 'dark' 
+                  ? 'bg-gradient-to-br from-[#09160f] to-[#15221b] border-white/10 text-white' 
+                  : 'bg-gradient-to-br from-[#006A42] to-[#0A8F5A] border-none text-white'
+              }`}>
                 <div className="absolute -top-12 -right-12 w-48 h-48 bg-yellow-400/5 rounded-full blur-3xl"></div>
                 
                 <div className="relative z-10 flex flex-col items-center py-4 text-center">
-                  <span className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-2">Total Balance</span>
+                  <span className={`text-[10px] uppercase tracking-widest font-bold mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-emerald-100 opacity-90'}`}>Total Balance</span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-bold text-yellow-400">{displayWalletCurrency}</span>
-                    <h1 className="text-4xl font-extrabold tracking-tighter">
+                    <span className={`text-xl font-bold ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-300'}`}>{displayWalletCurrency}</span>
+                    <h1 className="text-4xl font-extrabold tracking-tighter text-white">
                       {isCurrencyConverted 
                         ? balance.toLocaleString() 
                         : Math.round(balance * conversionRate).toLocaleString()
@@ -1618,23 +1652,27 @@ export default function App() {
                       <span className="opacity-50 text-xl">.00</span>
                     </h1>
                   </div>
-
+ 
                   <div className="mt-6 w-full flex flex-col gap-4">
                     <button 
                       onClick={() => setIsAddingMoney(true)}
-                      className="w-full bg-yellow-400 text-neutral-900 py-3.5 rounded-xl font-extrabold flex items-center justify-center gap-2 hover:bg-yellow-500 active:scale-95 transition-transform"
+                      className="w-full bg-yellow-400 text-neutral-900 py-3.5 rounded-xl font-extrabold flex items-center justify-center gap-2 hover:bg-[#F4B400] active:scale-95 transition-transform shadow-md cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-lg">add_circle</span>
                       Add Money
                     </button>
-
+ 
                     {/* Instant African Conversion Toggle */}
-                    <div className="flex items-center justify-between bg-[#111e17] border border-white/5 p-3 rounded-xl mt-2">
+                    <div className={`flex items-center justify-between border p-3 rounded-xl mt-2 ${
+                      theme === 'dark' 
+                        ? 'bg-[#111e17] border-white/5 text-white' 
+                        : 'bg-white/15 border-white/10 text-white backdrop-blur-sm'
+                    }`}>
                       <div className="flex items-center gap-3 text-left">
-                        <span className="material-symbols-outlined text-[#0A8F5A] text-2xl">currency_exchange</span>
+                        <span className={`material-symbols-outlined text-2xl ${theme === 'dark' ? 'text-[#0A8F5A]' : 'text-yellow-300'}`}>currency_exchange</span>
                         <div>
-                          <p className="text-xs font-bold">Instant African Conversion</p>
-                          <p className="text-[10px] text-gray-400">Convert Nigeria ₦ and Kenya KES instantly</p>
+                          <p className="text-xs font-bold text-white">Instant African Conversion</p>
+                          <p className={`text-[10px] ${theme === 'dark' ? 'text-gray-400' : 'text-emerald-50/80'}`}>Convert Nigeria ₦ and Kenya KES instantly</p>
                         </div>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -1647,19 +1685,23 @@ export default function App() {
                           className="sr-only peer" 
                           type="checkbox"
                         />
-                        <div className="w-11 h-6 bg-neutral-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0A8F5A]"></div>
+                        <div className="w-11 h-6 bg-neutral-800/40 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0A8F5A]"></div>
                       </label>
                     </div>
                   </div>
                 </div>
               </section>
-
+ 
               {/* Add Money dynamic overlay/drawer */}
               {isAddingMoney && (
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-5 bg-neutral-900/40 rounded-3xl border border-yellow-500/10 space-y-4"
+                  className={`p-5 rounded-3xl border space-y-4 ${
+                    theme === 'dark' 
+                      ? 'bg-neutral-900/40 border-yellow-500/10 text-white' 
+                      : 'bg-white border-emerald-100 shadow-md text-neutral-900'
+                  }`}
                 >
                   <h3 className="text-xs font-bold text-[#0A8F5A] uppercase tracking-wider">Top Up Wallet</h3>
                   <div className="flex gap-2">
@@ -1667,13 +1709,22 @@ export default function App() {
                       value={addAmount} 
                       onChange={(e) => setAddAmount(e.target.value)}
                       type="number" 
-                      className="flex-1 bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs"
+                      className={`flex-1 rounded-xl px-3 py-2 text-xs outline-none ${
+                        theme === 'dark' 
+                          ? 'bg-black/30 border border-white/10 text-white' 
+                          : 'bg-neutral-50 border border-neutral-250 text-neutral-900'
+                      }`}
                       placeholder="Amount in NGN"
                     />
-                    <button onClick={handleAddMoney} className="bg-[#0A8F5A] text-white px-4 py-2 rounded-xl text-xs font-bold">
+                    <button onClick={handleAddMoney} className="bg-[#0A8F5A] hover:bg-[#006a41] text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer">
                       Add
                     </button>
-                    <button onClick={() => setIsAddingMoney(false)} className="bg-neutral-800 text-gray-300 px-4 py-2 rounded-xl text-xs">
+                    <button 
+                      onClick={() => setIsAddingMoney(false)} 
+                      className={`px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer ${
+                        theme === 'dark' ? 'bg-neutral-805 text-gray-300 hover:bg-neutral-700' : 'bg-neutral-100 text-neutral-650 hover:bg-neutral-200'
+                      }`}
+                    >
                       Cancel
                     </button>
                   </div>
@@ -1684,9 +1735,13 @@ export default function App() {
               <section className="grid grid-cols-4 gap-3 text-center">
                 <button 
                   onClick={() => triggerToast("Launching secure QR Code Scanner...")}
-                  className="flex flex-col items-center justify-center gap-2 p-4 bg-white/5 dark:bg-[#15221b] rounded-2xl border border-white/5 hover:bg-white/10 transition-colors"
+                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all cursor-pointer ${
+                    theme === 'dark' 
+                      ? 'bg-[#15221b] border-white/5 text-white hover:bg-[#1c2d24]' 
+                      : 'bg-white border-neutral-200/70 text-neutral-800 hover:bg-emerald-50/20 hover:border-emerald-300 shadow-sm'
+                  }`}
                 >
-                  <div className="w-12 h-12 rounded-full bg-yellow-400/10 flex items-center justify-center text-yellow-400">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${theme === 'dark' ? 'bg-yellow-400/10 text-yellow-400' : 'bg-amber-100 text-amber-600'}`}>
                     <span className="material-symbols-outlined text-[28px]">qr_code_scanner</span>
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider">Scan</span>
@@ -1694,9 +1749,13 @@ export default function App() {
 
                 <button 
                   onClick={() => triggerToast("Send Money: Please verify recipient AfriID")}
-                  className="flex flex-col items-center justify-center gap-2 p-4 bg-white/5 dark:bg-[#15221b] rounded-2xl border border-white/5 hover:bg-white/10 transition-colors"
+                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all cursor-pointer ${
+                    theme === 'dark' 
+                      ? 'bg-[#15221b] border-white/5 text-white hover:bg-[#1c2d24]' 
+                      : 'bg-white border-neutral-200/70 text-neutral-800 hover:bg-emerald-50/20 hover:border-emerald-300 shadow-sm'
+                  }`}
                 >
-                  <div className="w-12 h-12 rounded-full bg-emerald-400/10 flex items-center justify-center text-[#6ddb9f]">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${theme === 'dark' ? 'bg-emerald-400/10 text-[#6ddb9f]' : 'bg-emerald-100 text-emerald-600'}`}>
                     <span className="material-symbols-outlined text-[28px]">send</span>
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider">Send</span>
@@ -1704,9 +1763,13 @@ export default function App() {
 
                 <button 
                   onClick={() => triggerToast("Request payment: Send link to groups")}
-                  className="flex flex-col items-center justify-center gap-2 p-4 bg-white/5 dark:bg-[#15221b] rounded-2xl border border-white/5 hover:bg-white/10 transition-colors"
+                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all cursor-pointer ${
+                    theme === 'dark' 
+                      ? 'bg-[#15221b] border-white/5 text-white hover:bg-[#1c2d24]' 
+                      : 'bg-white border-neutral-200/70 text-neutral-800 hover:bg-emerald-50/20 hover:border-emerald-300 shadow-sm'
+                  }`}
                 >
-                  <div className="w-12 h-12 rounded-full bg-neutral-300/10 flex items-center justify-center text-neutral-300">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${theme === 'dark' ? 'bg-neutral-300/10 text-neutral-300' : 'bg-neutral-100 text-neutral-600'}`}>
                     <span className="material-symbols-outlined text-[28px]">request_quote</span>
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider">Request</span>
@@ -1714,9 +1777,13 @@ export default function App() {
 
                 <button 
                   onClick={() => triggerToast("Select active business storefront checkout")}
-                  className="flex flex-col items-center justify-center gap-2 p-4 bg-white/5 dark:bg-[#15221b] rounded-2xl border border-white/5 hover:bg-white/10 transition-colors"
+                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all cursor-pointer ${
+                    theme === 'dark' 
+                      ? 'bg-[#15221b] border-white/5 text-white hover:bg-[#1c2d24]' 
+                      : 'bg-white border-neutral-200/70 text-neutral-800 hover:bg-emerald-50/20 hover:border-emerald-300 shadow-sm'
+                  }`}
                 >
-                  <div className="w-12 h-12 rounded-full bg-orange-400/10 flex items-center justify-center text-orange-400">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${theme === 'dark' ? 'bg-orange-400/10 text-orange-400' : 'bg-orange-100 text-orange-600'}`}>
                     <span className="material-symbols-outlined text-[28px]">storefront</span>
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider">Pay</span>
@@ -1725,19 +1792,23 @@ export default function App() {
 
               {/* Spend Insight Widgets (from image 3) */}
               <section className="grid grid-cols-2 gap-4">
-                <div className="bg-white/5 dark:bg-[#111e17] p-4 rounded-2xl border border-white/5">
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1">Weekly Spend</p>
-                  <p className="text-sm font-extrabold">{displayWalletCurrency}12,400</p>
-                  <div className="w-full bg-neutral-800 h-1 rounded-full mt-3 overflow-hidden">
+                <div className={`rounded-2xl border p-4 ${
+                  theme === 'dark' ? 'bg-[#111e17] border-white/5 text-white' : 'bg-white border-neutral-200/70 text-neutral-800 shadow-sm'
+                }`}>
+                  <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Weekly Spend</p>
+                  <p className={`text-sm font-extrabold ${theme === 'dark' ? 'text-white' : 'text-neutral-900'}`}>{displayWalletCurrency}12,400</p>
+                  <div className={`w-full h-1 rounded-full mt-3 overflow-hidden ${theme === 'dark' ? 'bg-neutral-800' : 'bg-neutral-100'}`}>
                     <div className="bg-[#0A8F5A] h-full w-2/3"></div>
                   </div>
                 </div>
 
-                <div className="bg-white/5 dark:bg-[#111e17] p-4 rounded-2xl border border-white/5">
+                <div className={`rounded-2xl border p-4 ${
+                  theme === 'dark' ? 'bg-[#111e17] border-white/5 text-white' : 'bg-white border-neutral-200/70 text-neutral-800 shadow-sm'
+                }`}>
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1">Goal: Savannah Car</p>
-                  <p className="text-sm font-extrabold">{displayWalletCurrency}2.4M / 5M</p>
-                  <div className="w-full bg-neutral-800 h-1 rounded-full mt-3 overflow-hidden">
-                    <div className="bg-yellow-400 h-full w-[48%]"></div>
+                  <p className={`text-sm font-extrabold ${theme === 'dark' ? 'text-white' : 'text-neutral-900'}`}>{displayWalletCurrency}2.4M / 5M</p>
+                  <div className={`w-full h-1 rounded-full mt-3 overflow-hidden ${theme === 'dark' ? 'bg-neutral-800' : 'bg-neutral-100'}`}>
+                    <div className="bg-yellow-450 h-full w-[48%]"></div>
                   </div>
                 </div>
               </section>
@@ -1745,31 +1816,40 @@ export default function App() {
               {/* Recent Transactions List with detailed conversion tags */}
               <section className="space-y-3">
                 <div className="flex justify-between items-center px-1">
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-emerald-600 dark:text-[#6ddb9f]">Recent Transactions</h2>
-                  <button onClick={() => triggerToast("Historical statements downloaded")} className="text-yellow-400 text-[10px] font-bold">View All</button>
+                  <h2 className="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-[#6ddb9f]">Recent Transactions</h2>
+                  <button onClick={() => triggerToast("Historical statements downloaded")} className="text-emerald-700 dark:text-yellow-400 text-[10px] font-bold">View All</button>
                 </div>
 
                 <div className="space-y-2">
                   {transactions.map((tx) => {
                     const isPositive = tx.amount > 0;
                     return (
-                      <div key={tx.id} className="flex items-center justify-between p-4 bg-white/5 dark:bg-[#111e17] rounded-3xl border border-white/5 hover:border-yellow-400/20 transition-all">
+                      <div 
+                        key={tx.id} 
+                        className={`flex items-center justify-between p-4 rounded-[22px] border transition-all ${
+                          theme === 'dark' 
+                            ? 'bg-[#111e17] border-white/5 text-white hover:border-yellow-400/20' 
+                            : 'bg-white border-neutral-200/60 text-neutral-800 hover:border-emerald-600/20 hover:shadow-sm shadow-sm'
+                        }`}
+                      >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-yellow-400">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                            theme === 'dark' ? 'bg-black/20 text-yellow-400' : 'bg-amber-50 text-amber-600 border border-amber-100/50'
+                          }`}>
                             <span className="material-symbols-outlined">
                               {tx.category === 'deposit' ? 'account_balance_wallet' : tx.category === 'travel' ? 'language' : 'shopping_cart'}
                             </span>
                           </div>
                           <div>
-                            <p className="text-xs font-bold">{tx.title}</p>
+                            <p className={`text-xs font-bold ${theme === 'dark' ? 'text-white' : 'text-neutral-900'}`}>{tx.title}</p>
                             <p className="text-[10px] text-gray-500">{tx.date}, {tx.time}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className={`text-xs font-bold ${isPositive ? 'text-[#6ddb9f]' : 'text-rose-450'}`}>
+                          <p className={`text-xs font-black ${isPositive ? 'text-emerald-600 dark:text-[#6ddb9f]' : 'text-rose-500 dark:text-rose-450'}`}>
                             {isPositive ? '+' : '-'}{tx.currency}{Math.abs(tx.amount).toLocaleString()}
                           </p>
-                          <span className="text-[8px] uppercase font-bold text-gray-500 tracking-wider">
+                          <span className="text-[8px] uppercase font-bold text-gray-400 tracking-wider">
                             {tx.status}
                           </span>
                         </div>
@@ -1779,19 +1859,27 @@ export default function App() {
                 </div>
               </section>
 
-              {/* Promoted card layout matches bottom of wallet */}
-              <section className="p-6 rounded-3xl relative overflow-hidden group cursor-pointer glass-effect bg-gradient-to-br from-[#111e17] to-[#09160f] border border-emerald-500/10">
+              {/* Promoted card layout matches bottom of wallet. Beautiful emerald background in light mode */}
+              <section className={`p-6 rounded-3xl relative overflow-hidden group cursor-pointer border transition-all ${
+                theme === 'dark' 
+                  ? 'bg-gradient-to-br from-[#111e17] to-[#09160f] border-emerald-500/10' 
+                  : 'bg-gradient-to-br from-[#024a2f] to-[#006a41] border-none shadow-md hover:shadow-lg'
+              }`}>
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    <span className="bg-[#006a41]/30 text-[#6ddb9f] px-2 py-0.5 rounded text-[8px] font-bold uppercase border border-[#006a41]/50">New Feature</span>
-                    <h3 className="text-sm font-extrabold text-white mt-1">Virtual USD Card</h3>
-                    <p className="text-xs text-gray-400">Pay for international services instantly with 0% markup fee.</p>
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase border ${
+                      theme === 'dark' 
+                        ? 'bg-[#006a41]/30 text-[#6ddb9f] border-[#006a41]/50' 
+                        : 'bg-white/20 text-yellow-300 border-white/20'
+                    }`}>New Feature</span>
+                    <h3 className="text-sm font-extrabold text-white mt-2">Virtual USD Card</h3>
+                    <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-emerald-100/90'}`}>Pay for international services instantly with 0% markup fee.</p>
                   </div>
                   <div className="w-14 h-14 opacity-25">
                     <span className="material-symbols-outlined text-[54px] text-yellow-400">credit_card</span>
                   </div>
                 </div>
-                <button onClick={() => triggerToast("Opening USD card application platform")} className="mt-4 text-yellow-400 text-xs font-bold flex items-center gap-1">
+                <button onClick={() => triggerToast("Opening USD card application platform")} className="mt-4 text-yellow-300 hover:text-yellow-400 text-xs font-bold flex items-center gap-1 cursor-pointer">
                   Get Started <span className="material-symbols-outlined text-xs">arrow_forward</span>
                 </button>
               </section>
@@ -2587,6 +2675,37 @@ export default function App() {
                       </div>
                       
                       <div className="mx-4 border-t border-gray-100 dark:border-white/5"></div>
+
+                      {/* Design System Theme Switcher */}
+                      <div 
+                        onClick={() => {
+                          setTheme(theme === 'light' ? 'dark' : 'light');
+                          triggerToast(`Switched to ${theme === 'light' ? 'Dark' : 'Light'} theme.`);
+                        }}
+                        className="flex items-center justify-between p-4 hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                            theme === 'dark' ? 'bg-[#0A8F5A]/10 text-[#6ddb9f]' : 'bg-[#006a41]/10 text-[#006a41]'
+                          }`}>
+                            <span className="material-symbols-outlined text-lg">
+                              {theme === 'dark' ? 'dark_mode' : 'light_mode'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-semibold text-neutral-800 dark:text-gray-100">Design Theme</span>
+                            <p className="text-[10px] text-gray-400 font-medium">Currently: {theme === 'dark' ? 'Dark' : 'Light'} Mode</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-gray-400 font-extrabold uppercase">{theme === 'dark' ? 'Dark' : 'Light'}</span>
+                          <div className={`w-9 h-5 rounded-full p-0.5 transition-colors ${theme === 'dark' ? 'bg-[#0A8F5A]' : 'bg-neutral-300'}`}>
+                            <div className={`w-4 h-4 rounded-full bg-white transition-transform ${theme === 'dark' ? 'translate-x-[16px]' : 'translate-x-0'}`}></div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mx-4 border-t border-gray-100 dark:border-white/5"></div>
                       
                       {/* Support */}
                       <div 
@@ -2626,81 +2745,274 @@ export default function App() {
       {/* DYNAMIC ACTION SHEET / MENU FOR LARGE CREATOR "+" BUTTON */}
       <AnimatePresence>
         {showCreateMenu && (
-          <div className="fixed inset-0 z-50">
+          <div className="fixed inset-0 z-50 flex items-end justify-center">
             {/* Backdrop */}
             <div 
               onClick={() => setShowCreateMenu(false)}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             ></div>
-            {/* Bottom Panel */}
+            
+            {/* Bottom Panel / Roll-up Creator Workspace */}
             <motion.div 
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
+              initial={{ y: "100%", x: 0 }}
+              animate={{ y: 0, x: 0 }}
               exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className={`absolute bottom-0 left-0 right-0 rounded-t-[32px] p-6 text-on-surface border-t shadow-2xl ${theme === 'dark' ? 'bg-[#15221b] border-white/10 text-white' : 'bg-white border-gray-200'}`}
+              transition={{ type: "spring", damping: 30, stiffness: 300, mass: 0.8 }}
+              className={`w-full max-w-lg rounded-t-[32px] overflow-hidden border-t shadow-2xl flex flex-col z-10 transition-all duration-300 ${
+                theme === 'dark' 
+                  ? 'bg-[#0f1914] border-white/10 text-white' 
+                  : 'bg-white border-neutral-200 text-neutral-950'
+              }`}
+              style={{ height: isCreatorExpanded ? "98vh" : "82vh" }}
             >
-              <div className="w-12 h-1.5 bg-neutral-700 rounded-full mx-auto mb-6"></div>
+              {/* Image Banner Header block matching PRD with click or scroll-to-expand support */}
+              <div className="flex flex-col bg-[#006A42] text-white shrink-0 shadow-md select-none">
+                {/* Visual Pull Notch Handle / Click-to-Expand banner */}
+                <div 
+                  onClick={() => setIsCreatorExpanded(prev => !prev)}
+                  className="w-full pt-2 pb-1 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 active:bg-white/10 transition-colors"
+                  title="Scroll up or click here to expand to full screen"
+                >
+                  <div className="w-12 h-1 bg-white/35 rounded-full"></div>
+                  <div className="flex items-center gap-1 mt-1 opacity-70">
+                    <span className="material-symbols-outlined text-[13px] animate-bounce">
+                      {isCreatorExpanded ? 'keyboard_double_arrow_down' : 'keyboard_double_arrow_up'}
+                    </span>
+                    <span className="text-[8px] uppercase font-black tracking-widest font-mono">
+                      {isCreatorExpanded ? 'Swipe Down or Click to Collapse' : 'Scroll Up or Click to Expand'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 pt-1">
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmnIQ86LDdmfMPp1DY-aWdpxRamuijUDkLNbsU__T7TQqJPnofovaTr4VXz_d_4aM8kxjstNjYC9oyJvmedei6kV-WzNpe0cEt5seTYRbc1tEkSds0Mqh_27qEbJ3MJaShNu1I0Lr1Bg5JghL0hru6DdMBHvuucamoBfrNWo89tZ8dwZX2Enlf_SE6GmBiv3NMaSds1-9XSUApeSqclh3uersO3MFixY9mAEIQLTpBVs1TIgFB7zXsPoxgnJyF9HDqObpbIgEwxd4" 
+                      alt="Avatar" 
+                      className="w-10 h-10 rounded-full object-cover border-2 border-white/20"
+                      referrerPolicy="no-referrer"
+                    />
+                    <span className="text-[17px] font-black tracking-tight text-white">Create Workspace</span>
+                  </div>
+                  <button 
+                    onClick={() => setShowCreateMenu(false)}
+                    className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 active:scale-90 flex items-center justify-center transition-all cursor-pointer"
+                    title="Close Workspace"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">close</span>
+                  </button>
+                </div>
+              </div>
               
-              <h3 className="font-extrabold text-sm uppercase tracking-wider mb-4 text-[#0A8F5A] dark:text-yellow-400 text-center">AfriChat Creator Deck</h3>
-              <div className="grid grid-cols-2 gap-4">
+              {/* Scrollable Container - onScroll expands automatically to full screen */}
+              <div 
+                onScroll={(e) => {
+                  const target = e.currentTarget;
+                  // If user scrolls up or down past 15px, expand automatically
+                  if (target.scrollTop > 15 && !isCreatorExpanded) {
+                    setIsCreatorExpanded(true);
+                  }
+                }}
+                className="flex-1 overflow-y-auto custom-scrollbar"
+              >
                 
-                {/* 1 */}
-                <div 
-                  onClick={() => { setShowCreateMenu(false); setIsAppWizardOpen(true); }}
-                  className="p-4 bg-black/20 hover:bg-[#006a41]/25 border border-white/5 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[#6ddb9f] text-2xl">auto_awesome</span>
-                  <div>
-                    <p className="text-xs font-bold">Launch Custom App</p>
-                    <p className="text-[10px] text-gray-500">Compile brand templates with AI</p>
+                {/* Hero Title */}
+                <div className="p-6 pb-2">
+                  <h2 className="text-[25px] font-extrabold tracking-tight leading-tight text-neutral-900 dark:text-neutral-50">
+                    What's on your mind?
+                  </h2>
+                  <p className="text-xs text-neutral-500 dark:text-gray-400 font-medium leading-relaxed mt-1">
+                    Choose a way to express yourself or build something new.
+                  </p>
+                </div>
+                
+                {/* Section: CREATE POST Grid */}
+                <div className="px-6 py-4">
+                  <h4 className="text-[11px] font-black tracking-wider text-emerald-800 dark:text-[#6ddb9f] uppercase mb-4">
+                    Create Post
+                  </h4>
+                  
+                  <div className="grid grid-cols-4 gap-2">
+                    
+                    {/* Text */}
+                    <div 
+                      onClick={() => {
+                        setShowCreateMenu(false);
+                        triggerToast("Text editor opened: started a community thread draft.");
+                      }}
+                      className="flex flex-col items-center text-center cursor-pointer group"
+                    >
+                      <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 text-[#006a41] dark:text-[#6ddb9f] flex items-center justify-center group-hover:scale-105 active:scale-95 transition-all shadow-sm">
+                        <span className="material-symbols-outlined text-[24px]">notes</span>
+                      </div>
+                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-250 mt-2">Text</span>
+                      <span className="text-[9px] text-neutral-400 dark:text-neutral-500 leading-tight mt-0.5 px-0.5">Share your thoughts</span>
+                    </div>
+
+                    {/* Image */}
+                    <div 
+                      onClick={() => {
+                        setShowCreateMenu(false);
+                        triggerToast("Image browser launched; ready for memories upload.");
+                      }}
+                      className="flex flex-col items-center text-center cursor-pointer group"
+                    >
+                      <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/20 text-yellow-600 dark:text-amber-400 flex items-center justify-center group-hover:scale-105 active:scale-95 transition-all shadow-sm">
+                        <span className="material-symbols-outlined text-[24px]">image</span>
+                      </div>
+                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-250 mt-2">Image</span>
+                      <span className="text-[9px] text-neutral-400 dark:text-neutral-500 leading-tight mt-0.5 px-0.5">Photos & memories</span>
+                    </div>
+
+                    {/* Video */}
+                    <div 
+                      onClick={() => {
+                        setShowCreateMenu(false);
+                        triggerToast("Video reel manager compiled; record shorts clips.");
+                      }}
+                      className="flex flex-col items-center text-center cursor-pointer group"
+                    >
+                      <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-450 flex items-center justify-center group-hover:scale-105 active:scale-95 transition-all shadow-sm">
+                        <span className="material-symbols-outlined text-[24px]">slideshow</span>
+                      </div>
+                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-250 mt-2">Video</span>
+                      <span className="text-[9px] text-neutral-400 dark:text-neutral-500 leading-tight mt-0.5 px-0.5">Short clips & stories</span>
+                    </div>
+
+                    {/* Voice */}
+                    <div 
+                      onClick={() => {
+                        setShowCreateMenu(false);
+                        triggerToast("Voice mixer launched; record immersive speech snippet.");
+                      }}
+                      className="flex flex-col items-center text-center cursor-pointer group"
+                    >
+                      <div className="w-14 h-14 rounded-2xl bg-sky-50 dark:bg-sky-950/20 text-sky-600 dark:text-sky-400 flex items-center justify-center group-hover:scale-105 active:scale-95 transition-all shadow-sm">
+                        <span className="material-symbols-outlined text-[24px]">mic</span>
+                      </div>
+                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-250 mt-2">Voice</span>
+                      <span className="text-[9px] text-neutral-400 dark:text-neutral-500 leading-tight mt-0.5 px-0.5 font-medium">Audio notes</span>
+                    </div>
+
                   </div>
                 </div>
 
-                {/* 2 */}
-                <div 
-                  onClick={() => { setShowCreateMenu(false); setIsMarketOpen(true); }}
-                  className="p-4 bg-black/20 hover:bg-[#006a41]/25 border border-white/5 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center transition-colors"
-                >
-                  <span className="material-symbols-outlined text-yellow-400 text-2xl">shopping_cart</span>
-                  <div>
-                    <p className="text-xs font-bold">AfriMarket Shop</p>
-                    <p className="text-[10px] text-gray-500">List products & view live auctions</p>
-                  </div>
-                </div>
+                <div className="mx-6 my-2 border-t border-gray-100 dark:border-white/5"></div>
 
-                {/* 3 */}
-                <div 
-                  onClick={() => { setShowCreateMenu(false); setIsServicesOpen(true); }}
-                  className="p-4 bg-black/20 hover:bg-[#006a41]/25 border border-white/5 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center transition-colors"
-                >
-                  <span className="material-symbols-outlined text-blue-400 text-2xl">local_taxi</span>
-                  <div>
-                    <p className="text-xs font-bold">Book AfriServices</p>
-                    <p className="text-[10px] text-gray-500">On-demand rides, food & mechanics</p>
-                  </div>
-                </div>
+                {/* Section: LAUNCH & BUILD Lists */}
+                <div className="px-6 py-4 pb-16">
+                  <h4 className="text-[11px] font-black tracking-wider text-emerald-800 dark:text-[#6ddb9f] uppercase mb-4">
+                    Launch & Build
+                  </h4>
+                  
+                  <div className="space-y-3.5">
+                    
+                    {/* Create Business */}
+                    <div 
+                      onClick={() => {
+                        setShowCreateMenu(false);
+                        setIsMarketOpen(true);
+                        triggerToast("Opened AfriMarket Merchant portal console.");
+                      }}
+                      className="flex items-center justify-between p-4 bg-neutral-50/50 dark:bg-white/5 border border-neutral-150/50 dark:border-white/5 rounded-2xl cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/10 active:scale-[0.99] transition-all group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-amber-950/30 text-amber-650 dark:text-amber-400 flex items-center justify-center shadow-inner">
+                          <span className="material-symbols-outlined text-[22px]">card_travel</span>
+                        </div>
+                        <div>
+                          <h5 className="font-extrabold text-[14px] text-neutral-900 dark:text-neutral-100 leading-none">
+                            Create Business
+                          </h5>
+                          <p className="text-[11px] text-neutral-500 dark:text-gray-400 mt-1.5 leading-tight font-medium">
+                            Launch your own digital business.
+                          </p>
+                        </div>
+                      </div>
+                      <span className="material-symbols-outlined text-neutral-400 group-hover:translate-x-1.5 transition-transform text-lg">chevron_right</span>
+                    </div>
 
-                {/* 4 */}
-                <div 
-                  onClick={() => { setShowCreateMenu(false); setIsLearnOpen(true); }}
-                  className="p-4 bg-black/20 hover:bg-[#006a41]/25 border border-white/5 rounded-2xl cursor-pointer flex flex-col items-center gap-2 text-center transition-colors"
-                >
-                  <span className="material-symbols-outlined text-pink-400 text-2xl">school</span>
-                  <div>
-                    <p className="text-xs font-bold">Explore AfriLearn</p>
-                    <p className="text-[10px] text-gray-500">Skill curriculums & reward quizzes</p>
+                    {/* Create Mini App */}
+                    <div 
+                      onClick={() => {
+                        setShowCreateMenu(false);
+                        setIsAppWizardOpen(true);
+                      }}
+                      className="flex items-center justify-between p-4 bg-neutral-50/50 dark:bg-white/5 border border-neutral-150/50 dark:border-white/5 rounded-2xl cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/10 active:scale-[0.99] transition-all group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-[#6ddb9f] flex items-center justify-center shadow-inner">
+                          <span className="material-symbols-outlined text-[22px]">apps</span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h5 className="font-extrabold text-[14px] text-neutral-900 dark:text-neutral-100 leading-none">
+                              Create Mini App
+                            </h5>
+                            <span className="bg-[#F4B400] text-black text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tight shadow-sm scale-90 -translate-y-0.5">
+                              AI POWER
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-neutral-500 dark:text-gray-400 mt-1.5 leading-tight font-medium">
+                            Build a powerful app with AI assistance.
+                          </p>
+                        </div>
+                      </div>
+                      <span className="material-symbols-outlined text-neutral-400 group-hover:translate-x-1.5 transition-transform text-lg">chevron_right</span>
+                    </div>
+
+                    {/* Create Community */}
+                    <div 
+                      onClick={() => {
+                        setShowCreateMenu(false);
+                        triggerToast("Loaded AfriCommunity launch template workspace.");
+                      }}
+                      className="flex items-center justify-between p-4 bg-neutral-50/50 dark:bg-white/5 border border-neutral-150/50 dark:border-white/5 rounded-2xl cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/10 active:scale-[0.99] transition-all group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-950/30 text-teal-650 dark:text-teal-400 flex items-center justify-center shadow-inner">
+                          <span className="material-symbols-outlined text-[22px]">diversity_3</span>
+                        </div>
+                        <div>
+                          <h5 className="font-extrabold text-[14px] text-neutral-900 dark:text-neutral-100 leading-none">
+                            Create Community
+                          </h5>
+                          <p className="text-[11px] text-neutral-500 dark:text-gray-400 mt-1.5 leading-tight font-medium">
+                            Start a new social community or group.
+                          </p>
+                        </div>
+                      </div>
+                      <span className="material-symbols-outlined text-neutral-400 group-hover:translate-x-1.5 transition-transform text-lg">chevron_right</span>
+                    </div>
+
+                    {/* Create AI Agent */}
+                    <div 
+                      onClick={() => {
+                        setShowCreateMenu(false);
+                        triggerToast("AfriAI customized bot model builder active.");
+                      }}
+                      className="flex items-center justify-between p-4 bg-neutral-50/50 dark:bg-white/5 border border-neutral-150/50 dark:border-white/5 rounded-2xl cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/10 active:scale-[0.99] transition-all group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-neutral-100 dark:bg-neutral-900/40 text-neutral-600 dark:text-gray-400 flex items-center justify-center shadow-inner">
+                          <span className="material-symbols-outlined text-[22px]">smart_toy</span>
+                        </div>
+                        <div>
+                          <h5 className="font-extrabold text-[14px] text-neutral-900 dark:text-neutral-100 leading-none">
+                            Create AI Agent
+                          </h5>
+                          <p className="text-[11px] text-neutral-500 dark:text-gray-400 mt-1.5 leading-tight font-medium">
+                            Launch your personal or business AI assistant.
+                          </p>
+                        </div>
+                      </div>
+                      <span className="material-symbols-outlined text-neutral-400 group-hover:translate-x-1.5 transition-transform text-lg">chevron_right</span>
+                    </div>
+
                   </div>
                 </div>
 
               </div>
-
-              <button 
-                onClick={() => setShowCreateMenu(false)}
-                className="w-full mt-6 bg-neutral-850 py-3 rounded-xl border border-white/5 text-xs text-gray-300 font-bold"
-              >
-                Close Creator Panel
-              </button>
             </motion.div>
           </div>
         )}
@@ -2971,15 +3283,21 @@ export default function App() {
           <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-[#15221b]"></div>
         </button>
 
-        {/* Navigation Tab: FAB Middle button */}
-        <div className="relative -top-5">
-          <button 
-            onClick={() => setShowCreateMenu(true)}
-            className="w-14 h-14 bg-gradient-to-tr from-[#006a41] to-[#0A8F5A] text-white rounded-full flex items-center justify-center shadow-xl shadow-emerald-900/40 hover:rotate-90 hover:brightness-110 active:scale-90 transition-all duration-300"
-          >
-            <span className="material-symbols-outlined text-3xl">add</span>
-          </button>
-        </div>
+        {/* Navigation Tab: FAB Middle button with removed shadow and removed subtitle text matching the user request */}
+        <button 
+          onClick={() => setShowCreateMenu(prev => !prev)}
+          className="flex flex-col items-center justify-center transition-all relative -top-3 z-50 cursor-pointer"
+        >
+          <div className={`w-14 h-14 rounded-full flex justify-center items-center transition-all duration-300 ${
+            showCreateMenu 
+              ? 'bg-[#F4B400] text-black scale-105 rotate-180' 
+              : 'bg-gradient-to-tr from-[#006a41] to-[#0A8F5A] text-white hover:scale-105 hover:rotate-90'
+          }`}>
+            <span className="material-symbols-outlined text-[28px] font-bold">
+              {showCreateMenu ? 'close' : 'add'}
+            </span>
+          </div>
+        </button>
 
         {/* Navigation Tab: Discover / Super Wallets & Programs */}
         <button 
