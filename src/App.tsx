@@ -700,16 +700,15 @@ export default function App() {
 
   const ThemeToggleButton = ({ className = "" }: { className?: string }) => (
     <button
+      type="button"
       onClick={() => {
         toggleTheme();
         triggerToast(`Switched to ${theme === "light" ? "Dark" : "Light"} theme.`);
       }}
-      aria-label="Toggle theme"
-      className={`inline-flex items-center justify-center rounded-full border transition-all active:scale-95 ${className} ${
-        isDark
-          ? "bg-[var(--app-brand-soft)] border-white/10 text-[var(--app-brand)] hover:brightness-110"
-          : "bg-black/5 border-black/5 text-[var(--app-brand-strong)] hover:bg-black/10"
-      }`}
+      aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+      aria-pressed={isDark}
+      title={`Switch to ${isDark ? "light" : "dark"} mode`}
+      className={`inline-flex items-center justify-center rounded-full border border-surface bg-surface-strong text-brand shadow-sm transition-all hover:shadow-md active:scale-95 ${className}`}
     >
       <span className="material-symbols-outlined text-[18px]">
         {isDark ? "light_mode" : "dark_mode"}
@@ -790,6 +789,7 @@ export default function App() {
                 >
                   <span className="material-symbols-outlined">videocam</span>
                 </button>
+                <ThemeToggleButton className="h-9 w-9 shrink-0" />
                 
                 {/* AI Translate Toggle Section */}
                 <div className="h-6 w-px bg-white/10"></div>
@@ -1085,7 +1085,7 @@ export default function App() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              className="flex flex-col min-h-screen bg-[#F8F9FA] pb-24"
+              className="flex flex-col min-h-screen bg-background text-on-surface pb-24"
             >
               {/* Green Hero Header Area */}
               <section className="bg-[#006A42] text-white pt-6 px-5 pb-10 flex flex-col gap-5 relative select-none rounded-b-[40px] z-25 shadow-[0_4px_20px_rgba(0,106,66,0.15)]">
@@ -1119,6 +1119,7 @@ export default function App() {
                     >
                       notifications
                     </span>
+                    <ThemeToggleButton className="h-9 w-9 shrink-0" />
                   </div>
                 </div>
 
@@ -1254,7 +1255,7 @@ export default function App() {
               </section>
 
               {/* White overlap content body container nested over green background */}
-              <div className="px-5 pt-8 pb-10 space-y-7 -mt-5 bg-[#F8F9FA] rounded-t-[36px] relative z-20">
+              <div className="px-5 pt-8 pb-10 space-y-7 -mt-5 bg-background text-on-surface rounded-t-[36px] relative z-20">
                 
                 {/* Promo Segment: Build Your App in Minutes */}
                 <section className="bg-white rounded-[28px] border border-neutral-100 p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
@@ -1623,6 +1624,7 @@ export default function App() {
                     <span className="material-symbols-outlined text-emerald-600 dark:text-[#6ddb9f] text-[18px]">account_balance_wallet</span>
                     <span className="text-[11px] font-bold text-[#006a41] dark:text-[#6ddb9f]">$1,250.00</span>
                   </div>
+                  <ThemeToggleButton className="h-9 w-9 shrink-0" />
                   <button 
                     onClick={() => triggerToast("System settings: Verified AfriPay channels active.")} 
                     className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
@@ -1939,6 +1941,7 @@ export default function App() {
                   : 'bg-gradient-to-br from-[#006A42] to-[#0A8F5A] border-none text-white'
               }`}>
                 <div className="absolute -top-12 -right-12 w-48 h-48 bg-yellow-400/5 rounded-full blur-3xl"></div>
+                <ThemeToggleButton className="absolute right-4 top-4 z-10 h-9 w-9" />
                 
                 <div className="relative z-10 flex flex-col items-center py-4 text-center">
                   <span className={`text-[10px] uppercase tracking-widest font-bold mb-2 ${isDark ? 'text-gray-400' : 'text-emerald-100 opacity-90'}`}>Total Balance</span>
@@ -2193,7 +2196,7 @@ export default function App() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              className="flex flex-col min-h-screen bg-[#F8F9FA] pb-24"
+              className="flex flex-col min-h-screen bg-background text-on-surface pb-24"
             >
               {/* Premium Dark Green Header Band for Discover page matching screen 2 */}
               <header className="bg-[#006A42] text-white pt-6 px-5 pb-6 flex items-center justify-between select-none shadow-[0_2px_10px_rgba(0,106,66,0.1)]">
@@ -2206,13 +2209,15 @@ export default function App() {
                   <span className="font-extrabold text-white text-xl tracking-normal">Discover</span>
                 </div>
                 
-                {/* Notification bell on the right */}
-                <button 
-                  onClick={() => triggerToast("You are up to date. All system indexes synchronized.")}
-                  className="hover:bg-[#005434] p-2 rounded-full transition-all active:scale-90"
-                >
-                  <span className="material-symbols-outlined text-white text-[22px]">notifications</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => triggerToast("You are up to date. All system indexes synchronized.")}
+                    className="hover:bg-[#005434] p-2 rounded-full transition-all active:scale-90"
+                  >
+                    <span className="material-symbols-outlined text-white text-[22px]">notifications</span>
+                  </button>
+                  <ThemeToggleButton className="h-9 w-9 shrink-0" />
+                </div>
               </header>
 
               {/* Styled Search input row */}
