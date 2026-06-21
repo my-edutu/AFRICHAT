@@ -98,6 +98,73 @@ function getErrorMessage(err: unknown) {
   return "Unknown error";
 }
 
+function buildFallbackMiniAppSpec(prompt: string) {
+  const fallbackApps: Record<string, any> = {
+    ride: {
+      name: "Abuja City Rides",
+      category: "Ride Hailing",
+      colorTheme: "#0284c7",
+      pricingStructure: "₦250 base fee + ₦120 per km",
+      paymentMethods: ["AfriPay Wallet", "Virtual USD Card"],
+      initialData: [
+        { driver: "Babajide Alabi", state: "Available", vehicle: "Toyota Corolla (Silver)", rating: "4.9 ★", currentY: "Wuse II" },
+        { driver: "Chidi Okafor", state: "Busy", vehicle: "Honda Civic (Black)", rating: "4.8 ★", currentY: "Garki Area 11" },
+        { driver: "Moussa Diop", state: "Available", vehicle: "Hyundai Elantra (White)", rating: "4.7 ★", currentY: "Maitama" }
+      ],
+      adminNotes: "Auto-generated Ride Hailing program for Abuja with integrated cashout system on AfriPay."
+    },
+    school: {
+      name: "Lagos Tech Portal",
+      category: "School Portal",
+      colorTheme: "#7c3aed",
+      pricingStructure: "Free for students + Premium admin tools",
+      paymentMethods: ["AfriPay Wallet", "Bank Transfer"],
+      initialData: [
+        { subject: "Introduction to AI & Coding", teacher: "Instructor Godfrey", time: "Monday 10:00 AM", status: "Active" },
+        { subject: "African History Studies", teacher: "Prof. Amina K.", time: "Wednesday 2:00 PM", status: "Upcoming" },
+        { subject: "Fintech 101: Digital Wallets", teacher: "Dr. Abidemi", time: "Friday 4:00 PM", status: "Completed" }
+      ],
+      adminNotes: "School administrative system featuring lesson timelines, fee payments, and grader sheets catalog."
+    }
+  };
+
+  const key = prompt.toLowerCase().includes("school") ? "school" : "ride";
+  return fallbackApps[key] || {
+    name: prompt.slice(0, 20).replace(/[^a-zA-Z ]/g, "") + " App",
+    category: "Marketplace",
+    colorTheme: "#0d9488",
+    pricingStructure: "Standard peer-to-peer commissions",
+    paymentMethods: ["AfriPay Wallet"],
+    initialData: [
+      { item: "Fresh Jollof Rice", price: "₦1,800", stock: 15, seller: "Mama Kenya Foods" },
+      { item: "Handwoven Ankara Dress", price: "₦12,000", stock: 3, seller: "Lagos Threads Hub" }
+    ],
+    adminNotes: "Custom generated retail storefront inside AfriMarket, integrated into WeChat-style AfriChat."
+  };
+}
+
+function buildFallbackSummary(messages: any[]) {
+  const parts: string[] = [];
+  for (const message of messages.slice(-MAX_MESSAGES)) {
+    const senderName = readTextField(message?.senderName, 120) || "Unknown";
+    const text = readTextField(message?.text, 2000);
+    if (!text) {
+      continue;
+    }
+
+    parts.push(`${senderName}: ${text}`);
+    if (parts.length >= 3) {
+      break;
+    }
+  }
+
+  if (!parts.length) {
+    return "Summary unavailable right now.";
+  }
+
+  return `Recent discussion: ${parts.join(" • ")}.`;
+}
+
 async function startServer() {
   const app = express();
   app.disable("x-powered-by");
@@ -118,10 +185,6 @@ async function startServer() {
 
     const client = getAiClient();
     if (!client) {
-      if (IS_PRODUCTION) {
-        return res.status(503).json({ error: "Translation is temporarily unavailable." });
-      }
-
       const translations: Record<string, string> = {
         "Sannu, ya kake? Ina fatan kana cikin koshin lafiya.": "Hello, how are you? I hope you are in good health.",
         "Ina kwana": "Good morning",
@@ -130,7 +193,7 @@ async function startServer() {
         "Asante sana": "Thank you very much"
       };
       const mockTranslated = translations[text] || `[Translated to ${targetLang}] ${text}`;
-      return res.json({ translatedText: mockTranslated, sourceLang: "African Language", targetLang });
+      return res.json({ translatedText: mockTranslated, sourceLang: "African Language", targetLang, fallback: true });
     }
 
     try {
@@ -142,7 +205,12 @@ async function startServer() {
       res.json({ translatedText: result, targetLang });
     } catch (err: any) {
       console.error("AI translate error:", err);
-      res.status(502).json({ error: "Translation failed", details: IS_PRODUCTION ? undefined : getErrorMessage(err) });
+      res.json({
+        translatedText: `[Translation unavailable in ${targetLang}] ${text}`,
+        targetLang,
+        error: "Translation failed",
+        fallback: true
+      });
     }
   });
 
@@ -159,54 +227,7 @@ async function startServer() {
 
     const client = getAiClient();
     if (!client) {
-      if (IS_PRODUCTION) {
-        return res.status(503).json({ error: "Mini-app generation is temporarily unavailable." });
-      }
-
-      const fallbackApps: Record<string, any> = {
-        "ride": {
-          name: "Abuja City Rides",
-          category: "Ride Hailing",
-          colorTheme: "#0284c7",
-          pricingStructure: "₦250 base fee + ₦120 per km",
-          paymentMethods: ["AfriPay Wallet", "Virtual USD Card"],
-          initialData: [
-            { driver: "Babajide Alabi", state: "Available", vehicle: "Toyota Corolla (Silver)", rating: "4.9 ★", currentY: "Wuse II" },
-            { driver: "Chidi Okafor", state: "Busy", vehicle: "Honda Civic (Black)", rating: "4.8 ★", currentY: "Garki Area 11" },
-            { driver: "Moussa Diop", state: "Available", vehicle: "Hyundai Elantra (White)", rating: "4.7 ★", currentY: "Maitama" }
-          ],
-          adminNotes: "Auto-generated Ride Hailing program for Abuja with integrated cashout system on AfriPay."
-        },
-        "school": {
-          name: "Lagos Tech Portal",
-          category: "School Portal",
-          colorTheme: "#7c3aed",
-          pricingStructure: "Free for students + Premium admin tools",
-          paymentMethods: ["AfriPay Wallet", "Bank Transfer"],
-          initialData: [
-            { subject: "Introduction to AI & Coding", teacher: "Instructor Godfrey", time: "Monday 10:00 AM", status: "Active" },
-            { subject: "African History Studies", teacher: "Prof. Amina K.", time: "Wednesday 2:00 PM", status: "Upcoming" },
-            { subject: "Fintech 101: Digital Wallets", teacher: "Dr. Abidemi", time: "Friday 4:00 PM", status: "Completed" }
-          ],
-          adminNotes: "School administrative system featuring lesson timelines, fee payments, and grader sheets catalog."
-        }
-      };
-
-      const key = prompt.toLowerCase().includes("school") ? "school" : "ride";
-      const appSpec = fallbackApps[key] || {
-        name: prompt.slice(0, 20).replace(/[^a-zA-Z ]/g, "") + " App",
-        category: "Marketplace",
-        colorTheme: "#0d9488",
-        pricingStructure: "Standard peer-to-peer commissions",
-        paymentMethods: ["AfriPay Wallet"],
-        initialData: [
-          { item: "Fresh Jollof Rice", price: "₦1,800", stock: 15, seller: "Mama Kenya Foods" },
-          { item: "Handwoven Ankara Dress", price: "₦12,000", stock: 3, seller: "Lagos Threads Hub" }
-        ],
-        adminNotes: "Custom generated retail storefront inside AfriMarket, integrated into WeChat-style AfriChat."
-      };
-
-      return res.json({ appSpec });
+      return res.json({ appSpec: buildFallbackMiniAppSpec(prompt), fallback: true });
     }
 
     try {
@@ -273,8 +294,10 @@ async function startServer() {
       res.json({ appSpec: spec });
     } catch (err: any) {
       console.error("AI mini-app generation error:", err);
-      res.status(502).json({
-        error: "Failed to generate mini-app structure",
+      res.json({
+        appSpec: buildFallbackMiniAppSpec(prompt),
+        fallback: true,
+        error: "Mini-app generation used a fallback template.",
         details: IS_PRODUCTION ? undefined : getErrorMessage(err)
       });
     }
@@ -294,17 +317,13 @@ async function startServer() {
 
     const client = getAiClient();
     if (!client) {
-      if (IS_PRODUCTION) {
-        return res.status(503).json({ error: "AfriAI is temporarily unavailable." });
-      }
-
       let mockResponse = `I am AfriAI, your super app assistant. That sounds marvelous! Let me help you out. `;
       if (message.toLowerCase().includes("business") || message.toLowerCase().includes("clothing")) {
         mockResponse += `**AfriAI Business Setup Plan for your store:**\n1. **Storefront**: We have initialized AfriMarket Store "African Elegance".\n2. **Logistics**: Integrated with Abuja Delivery Mini-App.\n3. **Payments**: AfriPay NFC and QR scanner linked with 0% gateway commission.\n4. **Broadcasting**: Created promo channel 'Afrigram > Elegance'. Let's launch!`;
       } else {
         mockResponse += `To fully activate AfriAI smart features, please configure the AI service. Let's make digital life in Africa simpler together!`;
       }
-      return res.json({ response: mockResponse });
+      return res.json({ response: mockResponse, fallback: true });
     }
 
     try {
@@ -341,8 +360,9 @@ async function startServer() {
       res.json({ response: responseText });
     } catch (err: any) {
       console.error("AI assistant error:", err);
-      res.status(502).json({
-        error: "AfriAI assistant is currently offline.",
+      res.json({
+        response: "AfriAI assistant is temporarily unavailable. Please try again in a moment.",
+        fallback: true,
         details: IS_PRODUCTION ? undefined : getErrorMessage(err)
       });
     }
@@ -361,11 +381,7 @@ async function startServer() {
 
     const client = getAiClient();
     if (!client) {
-      if (IS_PRODUCTION) {
-        return res.status(503).json({ error: "Summarization is temporarily unavailable." });
-      }
-
-      return res.json({ summary: "Amina K. requested info on Lagos Tech Hub funding milestones. You agreed to send over the project details shortly. High-priority follow-up scheduled for 6:00 PM." });
+      return res.json({ summary: buildFallbackSummary(messages), fallback: true });
     }
 
     try {
@@ -397,8 +413,9 @@ async function startServer() {
       res.json({ summary });
     } catch (err: any) {
       console.error("AI summarize error:", err);
-      res.status(502).json({
-        error: "Failed to summarize conversation.",
+      res.json({
+        summary: buildFallbackSummary(messages),
+        fallback: true,
         details: IS_PRODUCTION ? undefined : getErrorMessage(err)
       });
     }
