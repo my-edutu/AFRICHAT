@@ -126,8 +126,9 @@ export default function AfriAIApp() {
     const text = (textOverride ?? composer).trim();
     if (!text || isSending) return;
 
+    const currentMessages = messages;
     const nextMessages: ChatMessage[] = [
-      ...messages,
+      ...currentMessages,
       { id: `user-${Date.now()}`, role: "user", text },
     ];
     setMessages(nextMessages);
@@ -141,7 +142,7 @@ export default function AfriAIApp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
-          chatHistory: nextMessages.map((message) => ({
+          chatHistory: currentMessages.map((message) => ({
             sender: message.role === "user" ? "me" : "AfriAI",
             senderName: message.role === "user" ? "You" : "AfriAI",
             text: message.text,
