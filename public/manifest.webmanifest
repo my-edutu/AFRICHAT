@@ -1,0 +1,17 @@
+{
+  "name": "AfriChat Mini Apps",
+  "short_name": "AfriChat",
+  "description": "Prompt-to-build mini apps with publishing, deployed shelf management, and offline mesh sync.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#006A41",
+  "icons": [
+    {
+      "src": "/africhat-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
