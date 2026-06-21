@@ -43,7 +43,15 @@ export interface CachedPlatformSnapshot {
 }
 
 function hasBrowserStorage(): boolean {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    return typeof window.localStorage !== 'undefined';
+  } catch {
+    return false;
+  }
 }
 
 function readStoredJson<T>(key: string, fallback: T): T {
