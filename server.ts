@@ -171,8 +171,14 @@ async function startServer() {
   app.set("trust proxy", 1);
   app.use(express.json({ limit: "32kb" }));
 
-  app.get("/api/health", (_req, res) => {
-    res.json({ ok: true, uptime: Math.round(process.uptime()), aiConfigured: Boolean(process.env.AI_API_KEY) });
+  app.get(["/healthz", "/api/health"], (_req, res) => {
+    res.json({
+      ok: true,
+      uptimeSeconds: Math.round(process.uptime()),
+      environment: process.env.NODE_ENV || "development",
+      aiConfigured: Boolean(process.env.AI_API_KEY),
+      timestamp: new Date().toISOString(),
+    });
   });
 
   // 1. API: Translation endpoint (Yoruba, Hausa, Swahili, etc.)
@@ -189,10 +195,6 @@ async function startServer() {
 
     const client = getAiClient();
     if (!client) {
-      if (IS_PRODUCTION) {
-        return res.status(503).json({ error: "Translation is temporarily unavailable." });
-      }
-
       const translations: Record<string, string> = {
         "Sannu, ya kake? Ina fatan kana cikin koshin lafiya.": "Hello, how are you? I hope you are in good health.",
         "Ina kwana": "Good morning",
@@ -213,15 +215,11 @@ async function startServer() {
       res.json({ translatedText: result, targetLang });
     } catch (err: any) {
       console.error("AI translate error:", err);
-      if (IS_PRODUCTION) {
-        return res.status(502).json({ error: "Translation failed", details: undefined });
-      }
       res.json({
         translatedText: `[Translation unavailable in ${targetLang}] ${text}`,
         targetLang,
         error: "Translation failed",
-        fallback: true,
-        details: getErrorMessage(err)
+        fallback: true
       });
     }
   });
@@ -239,9 +237,6 @@ async function startServer() {
 
     const client = getAiClient();
     if (!client) {
-      if (IS_PRODUCTION) {
-        return res.status(503).json({ error: "Mini-app generation is temporarily unavailable." });
-      }
       return res.json({ appSpec: buildFallbackMiniAppSpec(prompt), fallback: true });
     }
 
@@ -309,14 +304,11 @@ async function startServer() {
       res.json({ appSpec: spec });
     } catch (err: any) {
       console.error("AI mini-app generation error:", err);
-      if (IS_PRODUCTION) {
-        return res.status(502).json({ error: "Failed to generate mini-app structure" });
-      }
       res.json({
         appSpec: buildFallbackMiniAppSpec(prompt),
         fallback: true,
         error: "Mini-app generation used a fallback template.",
-        details: getErrorMessage(err)
+        details: IS_PRODUCTION ? undefined : getErrorMessage(err)
       });
     }
   });
@@ -335,10 +327,6 @@ async function startServer() {
 
     const client = getAiClient();
     if (!client) {
-      if (IS_PRODUCTION) {
-        return res.status(503).json({ error: "AfriAI is temporarily unavailable." });
-      }
-
       let mockResponse = `I am AfriAI, your super app assistant. That sounds marvelous! Let me help you out. `;
       if (message.toLowerCase().includes("business") || message.toLowerCase().includes("clothing")) {
         mockResponse += `**AfriAI Business Setup Plan for your store:**\n1. **Storefront**: We have initialized AfriMarket Store "African Elegance".\n2. **Logistics**: Integrated with Abuja Delivery Mini-App.\n3. **Payments**: AfriPay NFC and QR scanner linked with 0% gateway commission.\n4. **Broadcasting**: Created promo channel 'Afrigram > Elegance'. Let's launch!`;
@@ -382,13 +370,10 @@ async function startServer() {
       res.json({ response: responseText });
     } catch (err: any) {
       console.error("AI assistant error:", err);
-      if (IS_PRODUCTION) {
-        return res.status(502).json({ error: "AfriAI assistant is temporarily unavailable." });
-      }
       res.json({
         response: "AfriAI assistant is temporarily unavailable. Please try again in a moment.",
         fallback: true,
-        details: getErrorMessage(err)
+        details: IS_PRODUCTION ? undefined : getErrorMessage(err)
       });
     }
   });
@@ -406,9 +391,6 @@ async function startServer() {
 
     const client = getAiClient();
     if (!client) {
-      if (IS_PRODUCTION) {
-        return res.status(503).json({ error: "Summarization is temporarily unavailable." });
-      }
       return res.json({ summary: buildFallbackSummary(messages), fallback: true });
     }
 
@@ -441,13 +423,10 @@ async function startServer() {
       res.json({ summary });
     } catch (err: any) {
       console.error("AI summarize error:", err);
-      if (IS_PRODUCTION) {
-        return res.status(502).json({ error: "Failed to summarize conversation." });
-      }
       res.json({
         summary: buildFallbackSummary(messages),
         fallback: true,
-        details: getErrorMessage(err)
+        details: IS_PRODUCTION ? undefined : getErrorMessage(err)
       });
     }
   });
