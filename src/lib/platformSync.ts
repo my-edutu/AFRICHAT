@@ -14,6 +14,21 @@ const STORAGE_KEYS = {
   lastSyncedAt: 'africhat.platform.lastSyncedAt',
 } as const;
 
+const ALLOWED_TRANSACTION_CATEGORIES: Transaction['category'][] = [
+  'shopping',
+  'transfer',
+  'utility',
+  'travel',
+  'deposit',
+];
+
+const ALLOWED_TRANSACTION_STATUSES: Transaction['status'][] = [
+  'Completed',
+  'Pending',
+  'Received',
+  'Converted',
+];
+
 export interface SyncMutationResult<T> {
   status: 'synced' | 'queued';
   record: T;
@@ -52,7 +67,11 @@ function writeStoredJson(key: string, value: unknown): void {
     return;
   }
 
-  window.localStorage.setItem(key, JSON.stringify(value));
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Ignore storage quota / privacy mode failures and keep the app running.
+  }
 }
 
 function mergeById<T extends { id: string }>(base: T[], incoming: T[]): T[] {
@@ -90,16 +109,23 @@ function normalizeMiniApp(app: MiniApp): MiniApp {
 }
 
 function normalizeTransaction(transaction: Transaction | PlatformTransaction): PlatformTransaction {
+  const category = ALLOWED_TRANSACTION_CATEGORIES.includes(transaction.category)
+    ? transaction.category
+    : 'shopping';
+  const status = ALLOWED_TRANSACTION_STATUSES.includes(transaction.status)
+    ? transaction.status
+    : 'Completed';
+
   return {
     ...transaction,
     id: String(transaction.id),
     title: String(transaction.title),
-    category: transaction.category,
+    category,
     amount: Number(transaction.amount),
     currency: String(transaction.currency),
     date: String(transaction.date),
     time: String(transaction.time),
-    status: transaction.status,
+    status,
   };
 }
 
