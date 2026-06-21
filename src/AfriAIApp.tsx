@@ -114,7 +114,7 @@ export default function AfriAIApp() {
 
   const modeLabel = MODE_META[mode].label;
   const modeNote = MODE_META[mode].note;
-  const modeIcon = MODE_META[mode].icon;
+  const ModeIcon = MODE_META[mode].icon;
   const StatusIcon = theme === "dark" ? Moon : SunMedium;
 
   const recentSummary = useMemo(() => {
@@ -273,7 +273,7 @@ export default function AfriAIApp() {
             <div className="min-w-0">
               <div className="text-[11px] font-black uppercase tracking-[0.3em] text-brand-strong">Conversation</div>
               <div className="mt-1 flex items-center gap-2 text-sm text-on-surface-variant">
-                <modeIcon className="h-4 w-4" />
+                <ModeIcon className="h-4 w-4" />
                 <span className="font-semibold text-on-surface">{modeLabel}</span>
                 <span className="hidden sm:inline">{modeNote}</span>
               </div>
