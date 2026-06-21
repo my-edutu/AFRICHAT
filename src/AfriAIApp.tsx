@@ -142,7 +142,7 @@ export default function AfriAIApp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
-          chatHistory: currentMessages.map((message) => ({
+          chatHistory: currentMessages.slice(-20).map((message) => ({
             sender: message.role === "user" ? "me" : "AfriAI",
             senderName: message.role === "user" ? "You" : "AfriAI",
             text: message.text,
@@ -217,7 +217,7 @@ export default function AfriAIApp() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: messages.map((message) => ({
+          messages: messages.slice(-40).map((message) => ({
             senderName: message.role === "user" ? "You" : "AfriAI",
             text: message.text,
           })),
