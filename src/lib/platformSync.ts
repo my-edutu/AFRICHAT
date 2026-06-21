@@ -378,3 +378,4 @@ export function mergeTransactions(
 }
 
 export { normalizeMiniApp, normalizeTransaction, normalizeWallet };
+export const loadCachedPlatformSnapshot = readCachedPlatformSnapshot;
