@@ -46,6 +46,12 @@ export interface MiniApp {
   isCustom?: boolean;
   isActive?: boolean;
   creator?: string;
+  publishedAt?: string;
+  updatedAt?: string;
+  version?: number;
+  templateId?: string;
+  sourcePrompt?: string;
+  syncState?: 'draft' | 'queued' | 'synced';
   screens?: {
     title: string;
     description: string;
@@ -62,4 +68,36 @@ export interface AIAppSetup {
   paymentMethods: string[];
   initialData: any[]; // generic mocked rows for the app to showcase
   adminNotes: string;
+}
+
+export type SyncOperationKind =
+  | 'publish-miniapp'
+  | 'wallet-transaction'
+  | 'mesh-sync-request';
+
+export interface OfflineOperation {
+  id: string;
+  kind: SyncOperationKind;
+  createdAt: string;
+  payload: Record<string, unknown>;
+}
+
+export interface PlatformTransaction extends Transaction {
+  clientOperationId?: string;
+  sourceAppId?: string;
+  syncedAt?: string;
+}
+
+export interface PlatformWalletSnapshot {
+  balance: number;
+  transactions: PlatformTransaction[];
+  updatedAt: string;
+}
+
+export interface PlatformBootstrapPayload {
+  deployedApps: MiniApp[];
+  wallet: PlatformWalletSnapshot;
+  revision: number;
+  serverTime: string;
+  templates?: MiniApp[];
 }
